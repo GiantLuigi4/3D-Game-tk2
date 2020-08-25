@@ -7,11 +7,11 @@ buildscript {
         maven { url "https://plugins.gradle.org/m2/" }
         maven { url "https://oss.sonatype.org/content/repositories/snapshots/" }
         maven { url 'https://jitpack.io' }
+        maven { url 'https://modmaven.k-4u.nl/' }
         jcenter()
         google()
     }
     dependencies {
-
 
     }
 }
@@ -37,6 +37,7 @@ allprojects {
         maven { url "https://oss.sonatype.org/content/repositories/snapshots/" }
         maven { url "https://oss.sonatype.org/content/repositories/releases/" }
         maven { url 'https://jitpack.io' }
+        maven { url 'https://modmaven.k-4u.nl/' }
     }
 }
 
@@ -62,11 +63,15 @@ project(":core") {
 
     repositories {
         maven { url 'https://jitpack.io' }
+        maven { url 'https://modmaven.k-4u.nl/' }
     }
 
     dependencies {
         api "com.badlogicgames.gdx:gdx:$gdxVersion"
         api "com.badlogicgames.gdx:gdx-controllers:$gdxVersion"
         api "com.badlogicgames.gdx:gdx-bullet:$gdxVersion"
+
+        //PERLIN NOISE
+        implementation "net.rgsw:noise:1.0.4"
     }
 }

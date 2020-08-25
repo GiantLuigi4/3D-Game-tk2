@@ -1,8 +1,8 @@
 package com.tfc.client;
 
+import com.badlogic.gdx.Input;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.math.collision.BoundingBox;
-import com.tfc.ThreeDeeFirstPersonGame;
 import com.tfc.blocks.Block;
 import com.tfc.blocks.BlockPos;
 import com.tfc.entity.Player;
@@ -107,6 +107,10 @@ public class Main {
 			if (player.onGround) {
 				player.velocity.lerp(new Vector3(player.velocity.x, 2.0f, player.velocity.z), 0.1f);
 			}
+		}
+		if (keys.contains(Input.Keys.R)) {
+			player.velocity.y = 0;
+			player.pos.y = 12;
 		}
 		player.onGround = onGround.get();
 //		player.pos.y = 5;

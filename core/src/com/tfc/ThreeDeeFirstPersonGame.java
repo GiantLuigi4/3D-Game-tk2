@@ -6,14 +6,13 @@ import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.PerspectiveCamera;
 import com.badlogic.gdx.graphics.Texture;
-import com.badlogic.gdx.graphics.VertexAttributes;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-import com.badlogic.gdx.graphics.g3d.*;
+import com.badlogic.gdx.graphics.g3d.Environment;
+import com.badlogic.gdx.graphics.g3d.ModelBatch;
+import com.badlogic.gdx.graphics.g3d.ModelInstance;
 import com.badlogic.gdx.graphics.g3d.attributes.ColorAttribute;
-import com.badlogic.gdx.graphics.g3d.attributes.TextureAttribute;
 import com.badlogic.gdx.graphics.g3d.utils.ModelBuilder;
-import com.badlogic.gdx.math.Vector3;
 import com.tfc.blocks.Block;
 import com.tfc.blocks.BlockPos;
 import com.tfc.client.Main;
@@ -23,13 +22,12 @@ import com.tfc.events.registry.Registry;
 import com.tfc.model.Cube;
 import com.tfc.registry.Blocks;
 import com.tfc.registry.Textures;
-import com.tfc.utils.BiObject;
 import com.tfc.utils.Location;
 import com.tfc.utils.TransformStack;
+import com.tfc.world.ChunkPos;
 import com.tfc.world.World;
-import org.w3c.dom.Text;
+import net.rgsw.ptg.noise.perlin.Perlin2D;
 
-import java.awt.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Objects;
@@ -69,6 +67,27 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 	
 	public static String namespace = "game";
 	
+	public final HashMap<ChunkPos, ModelInstance> chunkModels = new HashMap<>();
+	
+	private void register(EventBase eventBase) {
+		Textures.register(new Location(namespace + ":sand"), new Texture("fine_sand.png"));
+		Textures.register(new Location(namespace + ":stone"), new Texture("stone.png"));
+		Textures.register(new Location(namespace + ":green_sand"), new Texture("green_sand.png"));
+		Textures.register(new Location(namespace + ":sand_stone"), new Texture("sand_stone.png"));
+		Textures.register(new Location(namespace + ":hotbar"), new Texture("hotbar_slot.png"));
+		
+		register("sand");
+		register("stone");
+		register("green_sand");
+		register("sand_stone");
+	}
+	
+	private static void register(String name) {
+		Blocks.register(new Block(new Location(namespace + ":" + name), Cube.createModel(Textures.get(new Location(namespace + ":" + name)))));
+	}
+	
+	private final ArrayList<Integer> keys = new ArrayList<>();
+	
 	@Override
 	public void create() {
 		INSTANCE = this;
@@ -90,11 +109,14 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 		stack = new TransformStack(batch2d);
 		
 		registryEvent.post();
-
-		int size = 6;
+		
+		int size = 128;
+		Perlin2D noise = new Perlin2D(new Random().nextInt(), 30, 30);
 		for (int x = -size; x <= size; x++) {
 			for (int z = -size; z <= size; z++) {
-				int yPos = Math.abs(z)==4?2:Math.abs(x)==4?2:0;
+//				int yPos = Math.abs(z)==(size-2)?2:Math.abs(x)==(size-2)?2:0;
+				int yPos = ((int) (noise.generate(x / 16f, z / 16f) * 32) + 64);
+//				int y = yPos;
 				for (int y = 0; y <= yPos; y++) {
 					if (new Random().nextDouble() >= 0.75) {
 						world.setBlock(new BlockPos(x, y, z), Blocks.get(new Location(namespace + ":sand")));
@@ -123,25 +145,6 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 		logic.start();
 	}
 	
-	private void register(EventBase eventBase) {
-		Textures.register(new Location(namespace + ":sand"), new Texture("fine_sand.png"));
-		Textures.register(new Location(namespace + ":stone"), new Texture("stone.png"));
-		Textures.register(new Location(namespace + ":green_sand"), new Texture("green_sand.png"));
-		Textures.register(new Location(namespace + ":sand_stone"), new Texture("sand_stone.png"));
-		Textures.register(new Location(namespace + ":hotbar"), new Texture("hotbar_slot.png"));
-		
-		register("sand");
-		register("stone");
-		register("green_sand");
-		register("sand_stone");
-	}
-	
-	private static void register(String name) {
-		Blocks.register(new Block(new Location(namespace + ":" + name), Cube.createModel(Textures.get(new Location(namespace + ":" + name)))));
-	}
-	
-	private final ArrayList<Integer> keys = new ArrayList<>();
-	
 	@Override
 	public void render() {
 		camera.position.set(player.pos.x, player.pos.y, player.pos.z);
@@ -158,24 +161,13 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT | GL20.GL_DEPTH_BUFFER_BIT);
 		
 		batch.begin(camera);
-//		ModelInstance sand = Blocks.get(new Location(namespace + ":sand_stone")).modelInstance;
-//		int size = 60;
-//		for (int x = -size; x <= size; x++) {
-//			for (int y = -size; y <= size; y++) {
-//				sand.transform.setTranslation(x * 2, 0, y * 2);
-//				batch.render(sand, environment);
-//			}
-//		}
 		world.chunks.forEach((chunkPos, chunk) -> {
-			for (BiObject<Block,BlockPos> block:chunk.getBlocks()) {
-				if (block != null && block.getObj1() != null) {
-					block.getObj1().modelInstance.transform.setTranslation(
-							block.getObj2().x * 2,
-							block.getObj2().y * 2,
-							block.getObj2().z * 2
-					);
-					batch.render(block.getObj1().modelInstance);
-				}
+			if (chunkModels.containsKey(chunkPos)) {
+				batch.render(chunkModels.get(chunkPos));
+			} else {
+				ModelInstance instance = new ModelInstance(chunk.bake());
+				batch.render(instance);
+				chunkModels.put(chunkPos, instance);
 			}
 		});
 		batch.end();

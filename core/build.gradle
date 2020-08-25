@@ -1,5 +1,9 @@
 apply plugin: "java"
 
+dependencies {
+    implementation "com.github.GiantLuigi4:FlameLoader:ee03e26202"
+}
+
 sourceCompatibility = 1.8
 [compileJava, compileTestJava]*.options*.encoding = 'UTF-8'
 

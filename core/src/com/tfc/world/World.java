@@ -14,7 +14,7 @@ public class World {
 		ChunkPos pos1=new ChunkPos(pos);
 		if (!chunks.containsKey(pos1)) {
 			chunks.put(pos1,new Chunk(this,pos1));
-			System.out.println("missing chunk at pos:"+pos1);
+//			System.out.println("missing chunk at pos:"+pos1);
 		}
 		return chunks.get(pos1);
 	}
