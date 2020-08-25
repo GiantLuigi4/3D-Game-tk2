@@ -45,7 +45,7 @@ public class Main {
 			player.velocity.lerp(new Vector3((float) Math.sin(Math.toRadians(getInstance().camRotX - rotOffset)), player.velocity.y, (float) Math.cos(Math.toRadians(getInstance().camRotX - rotOffset))), 0.1f);
 		}
 		AtomicBoolean onGround = new AtomicBoolean(false);
-		float playerHeight = 4;
+		float playerHeight = 3;
 		float playerWidth = 0.5f;
 		float padding = 0.1f;
 		
