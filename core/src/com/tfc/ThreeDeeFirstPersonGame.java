@@ -239,13 +239,22 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 							writer.close();
 						} catch (Throwable ignored) {
 						}
+						try {
+							File player = new File(dir + "\\saves\\.demo_save\\players\\player1.data");
+							player.getParentFile().mkdirs();
+							player.createNewFile();
+							FileWriter writer = new FileWriter(player);
+							writer.write(Compression.makeIllegible(Compression.compress("pos:0,128,0")));
+							writer.close();
+						} catch (Throwable ignored) {
+						}
 					} else {
 						try {
 							File file1 = new File(dir + "\\saves\\.demo_save\\save.data");
 							Scanner sc = new Scanner(file1);
 							StringBuilder builder = new StringBuilder();
 							while (sc.hasNextLine()) {
-								builder.append(sc.nextLine());
+								builder.append(sc.nextLine()).append('\n');
 							}
 							sc.close();
 							String saveData = Compression.decompress(Compression.makeLegible(builder.toString()));

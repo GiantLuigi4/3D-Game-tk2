@@ -11,6 +11,7 @@ public class Compression {
 			{"stone", "↑"},
 			{"green", "↨"},
 			{"st", "♣"},
+			{"pos:", "♫"},
 			{"on", "♥"},
 			{"qe", "§"},
 			{"tb", "☺"},
@@ -24,17 +25,17 @@ public class Compression {
 	
 	public static String compress(String text) {
 		String out = text;
-		for (String[] query : compression) {
-			out = out.replace(query[0], query[1]);
-		}
+//		for (String[] query : compression) {
+//			out = out.replace(query[0], query[1]);
+//		}
 		return out;
 	}
 	
 	public static String decompress(String text) {
 		String out = text;
-		for (String[] query : compression) {
-			out = out.replace(query[1], query[0]);
-		}
+//		for (String[] query : compression) {
+//			out = out.replace(query[1], query[0]);
+//		}
 		return out;
 	}
 	
@@ -42,27 +43,26 @@ public class Compression {
 	//Expands file size by 1 byte, but whatever...
 	public static String makeIllegible(String text) {
 		int lowestChar = new Random().nextInt(9999);
-//		for (char c:text.toCharArray()) {
-//			lowestChar = Math.min(c,lowestChar);
+//		StringBuilder out = new StringBuilder();
+//		out.append((char) lowestChar);
+//		for (char c : text.toCharArray()) {
+//			out.append((char) (((int) c) - lowestChar));
 //		}
-		StringBuilder out = new StringBuilder();
-		out.append((char) lowestChar);
-		for (char c : text.toCharArray()) {
-			out.append((char) (((int) c) - lowestChar));
-		}
-		return out.toString();
+//		return out.toString();
+		return text;
 	}
 	
 	public static String makeLegible(String text) {
-		int lowestChar = text.toCharArray()[0];
-		StringBuilder out = new StringBuilder();
-		boolean skip = true;
-		for (char c : text.toCharArray()) {
-			if (!skip) {
-				out.append((char) (((int) c) + lowestChar));
-			}
-			skip = false;
-		}
-		return out.toString();
+//		int lowestChar = text.toCharArray()[0];
+//		StringBuilder out = new StringBuilder();
+//		boolean skip = true;
+//		for (char c : text.toCharArray()) {
+//			if (!skip) {
+//				out.append((char) (((int) c) + lowestChar));
+//			}
+//			skip = false;
+//		}
+//		return out.toString();
+		return text;
 	}
 }
