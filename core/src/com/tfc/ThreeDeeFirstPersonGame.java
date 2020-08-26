@@ -35,8 +35,12 @@ import com.tfc.world.World;
 import net.rgsw.ptg.noise.perlin.Perlin2D;
 
 import java.io.File;
-import java.io.FileWriter;
-import java.util.*;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Objects;
+import java.util.Random;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -110,7 +114,28 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 		batch2d.dispose();
 		Textures.close();
 		running.set(false);
+		
+		try {
+			if (ingame) {
+				File player = new File(dir + "\\saves\\.demo_save\\players\\player1.data");
+				player.getParentFile().mkdirs();
+				player.createNewFile();
+				FileOutputStream writer = new FileOutputStream(player);
+				String text1 = "pos:" + this.player.pos.x + "," + this.player.pos.y + "," + this.player.pos.z + "\n";
+				text1 += "rot:" + camRotX + "," + camRotY + "," + camRotZ + "\n";
+				String text = Compression.makeIllegible(Compression.compress(text1));
+				char[] chars = text.toCharArray();
+				byte[] bytes = new byte[chars.length];
+				for (int i = 0; i < chars.length; i++) {
+					bytes[i] = (byte) chars[i];
+				}
+				writer.write(bytes);
+				writer.close();
+			}
+		} catch (Throwable ignored) {
+		}
 	}
+	
 	
 	public double camRotX = 0;
 	public double camRotY = 45;
@@ -234,8 +259,14 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 						
 						try {
 							file1.createNewFile();
-							FileWriter writer = new FileWriter(file1);
-							writer.write(Compression.makeIllegible(Compression.compress(saveData)));
+							FileOutputStream writer = new FileOutputStream(file1);
+							String text = Compression.makeIllegible(Compression.compress(saveData));
+							char[] chars = text.toCharArray();
+							byte[] bytes = new byte[chars.length];
+							for (int i = 0; i < chars.length; i++) {
+								bytes[i] = (byte) chars[i];
+							}
+							writer.write(bytes);
 							writer.close();
 						} catch (Throwable ignored) {
 						}
@@ -243,22 +274,40 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 							File player = new File(dir + "\\saves\\.demo_save\\players\\player1.data");
 							player.getParentFile().mkdirs();
 							player.createNewFile();
-							FileWriter writer = new FileWriter(player);
-							writer.write(Compression.makeIllegible(Compression.compress("pos:0,128,0")));
+							FileOutputStream writer = new FileOutputStream(player);
+							String text = Compression.makeIllegible(Compression.compress("pos:0,128,0"));
+							char[] chars = text.toCharArray();
+							byte[] bytes = new byte[chars.length];
+							for (int i = 0; i < chars.length; i++) {
+								bytes[i] = (byte) chars[i];
+							}
+							writer.write(bytes);
 							writer.close();
 						} catch (Throwable ignored) {
 						}
 					} else {
 						try {
 							File file1 = new File(dir + "\\saves\\.demo_save\\save.data");
-							Scanner sc = new Scanner(file1);
+							File file2 = new File(dir + "\\saves\\.demo_save\\players\\player1.data");
+							FileInputStream input = new FileInputStream(file1);
+							FileInputStream input2 = new FileInputStream(file2);
 							StringBuilder builder = new StringBuilder();
-							while (sc.hasNextLine()) {
-								builder.append(sc.nextLine()).append('\n');
+							StringBuilder builder2 = new StringBuilder();
+							byte[] bytes = new byte[input.available()];
+							byte[] bytes2 = new byte[input2.available()];
+							input.read(bytes);
+							input2.read(bytes2);
+							for (byte b : bytes) {
+								builder.append((char) b);
 							}
-							sc.close();
+							for (byte b : bytes2) {
+								builder2.append((char) b);
+							}
+							input.close();
+							input2.close();
 							String saveData = Compression.decompress(Compression.makeLegible(builder.toString()));
-//							System.out.println(saveData);
+							String playerData = Compression.decompress(Compression.makeLegible(builder2.toString()));
+							System.out.println(saveData);
 							for (String s : saveData.split("\n")) {
 								String[] strings = s.split(",");
 								try {
@@ -269,6 +318,22 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 											Integer.parseInt(strings[3].replace(",", ""))
 									);
 									world.setBlock(pos, block);
+								} catch (Throwable err) {
+									err.printStackTrace();
+								}
+							}
+							for (String s : playerData.split("\n")) {
+								String[] strings = s.split(",");
+								try {
+									if (strings[0].startsWith("pos:")) {
+										player.pos.x = Float.parseFloat(strings[0].replace("pos:", ""));
+										player.pos.y = Float.parseFloat(strings[1]);
+										player.pos.z = Float.parseFloat(strings[2]);
+									} else if (strings[0].startsWith("rot:")) {
+										camRotX = Double.parseDouble(strings[0].replace("rot:", ""));
+										camRotY = Double.parseDouble(strings[1]);
+										camRotZ = Double.parseDouble(strings[2]);
+									}
 								} catch (Throwable err) {
 									err.printStackTrace();
 								}
