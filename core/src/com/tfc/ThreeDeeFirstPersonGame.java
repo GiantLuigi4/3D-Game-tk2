@@ -258,7 +258,7 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 							}
 							sc.close();
 							String saveData = Compression.decompress(Compression.makeLegible(builder.toString()));
-							System.out.println(saveData);
+//							System.out.println(saveData);
 							for (String s : saveData.split("\n")) {
 								String[] strings = s.split(",");
 								try {
