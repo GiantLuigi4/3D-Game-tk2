@@ -129,3 +129,5 @@ Thumbs.db
 # Project exclude paths
 /game/build/
 /game/out/
+/flame_mods/
+/saves/

@@ -17,4 +17,8 @@ public class BlockPos {
 	public int hashCode() {
 		return Objects.hash(x, y, z);
 	}
+	
+	public BlockPos offset(int x, int y, int z) {
+		return new BlockPos(this.x + x, this.y + y, this.z + z);
+	}
 }

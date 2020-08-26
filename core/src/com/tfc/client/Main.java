@@ -53,56 +53,59 @@ public class Main {
 		float widthPlusPadding = playerWidth + padding;
 		float widthPlusOnePlusPadding = ((playerWidth + 1) + padding);
 		
-		getInstance().world.chunks.forEach((chunkPos, chunk) -> {
-			for (BiObject<Block, BlockPos> block : chunk.getBlocks()) {
-				if (block != null && block.getObj1() != null) {
-					float wallCollisionYBottom = player.pos.y - (playerHeight - (1 + padding));
-					float wallCollisionYTop = player.pos.y - (1 + padding);
-					BoundingBox cb = block.getObj1().getCollisionBox(block.getObj2());
-					//Floor Collision
-					if (cb.intersects(new BoundingBox(
-							new Vector3(player.pos.x - widthMinusPadding, player.pos.y - playerHeight, player.pos.z - widthMinusPadding),
-							new Vector3(player.pos.x + widthMinusPadding, player.pos.y - (playerHeight / 2f), player.pos.z + widthMinusPadding)
-					))) {
-						player.pos.y += (cb.max.y - (player.pos.y - playerHeight));
-						player.velocity.y = 0;
-						onGround.set(true);
-					}
-					//Wall Collision -X
-					if (cb.intersects(new BoundingBox(
-							new Vector3(player.pos.x - widthPlusPadding, wallCollisionYBottom, player.pos.z - widthMinusPadding),
-							new Vector3(player.pos.x + 0, wallCollisionYTop, player.pos.z + widthMinusPadding)
-					))) {
-						player.pos.x += (cb.max.x - (player.pos.x - widthPlusPadding));
-						player.velocity.x = 0;
-					}
-					//Wall Collision +X
-					if (cb.intersects(new BoundingBox(
-							new Vector3(player.pos.x - 0, wallCollisionYBottom, player.pos.z - widthMinusPadding),
-							new Vector3(player.pos.x + widthPlusOnePlusPadding + (padding*3.999f), wallCollisionYTop, player.pos.z + widthMinusPadding)
-					))) {
-						player.pos.x += (cb.min.x - (player.pos.x + widthPlusOnePlusPadding + (padding*4)));
-						player.velocity.x = 0;
-					}
-					//Wall Collision -Z
-					if (cb.intersects(new BoundingBox(
-							new Vector3(player.pos.x - widthMinusPadding, wallCollisionYBottom, player.pos.z - widthPlusPadding),
-							new Vector3(player.pos.x + widthMinusPadding, wallCollisionYTop, player.pos.z + 0)
-					))) {
-						player.pos.z += (cb.max.z - (player.pos.z - widthPlusPadding));
-						player.velocity.z = 0;
-					}
-					//Wall Collision +Z
-					if (cb.intersects(new BoundingBox(
-							new Vector3(player.pos.x - widthMinusPadding, wallCollisionYBottom, player.pos.z - 0),
-							new Vector3(player.pos.x + widthMinusPadding, wallCollisionYTop, player.pos.z + widthPlusOnePlusPadding + (padding*3.999f))
-					))) {
-						player.pos.z += (cb.min.z - (player.pos.z + widthPlusOnePlusPadding + (padding*4)));
-						player.velocity.z = 0;
+		try {
+			getInstance().world.chunks.forEach((chunkPos, chunk) -> {
+				for (BiObject<Block, BlockPos> block : chunk.getBlocks()) {
+					if (block != null && block.getObj1() != null) {
+						float wallCollisionYBottom = player.pos.y - (playerHeight - (1 + padding));
+						float wallCollisionYTop = player.pos.y - (1 + padding);
+						BoundingBox cb = block.getObj1().getCollisionBox(block.getObj2());
+						//Floor Collision
+						if (cb.intersects(new BoundingBox(
+								new Vector3(player.pos.x - widthMinusPadding, player.pos.y - playerHeight, player.pos.z - widthMinusPadding),
+								new Vector3(player.pos.x + widthMinusPadding, player.pos.y - (playerHeight / 2f), player.pos.z + widthMinusPadding)
+						))) {
+							player.pos.y += (cb.max.y - (player.pos.y - playerHeight));
+							player.velocity.y = 0;
+							onGround.set(true);
+						}
+						//Wall Collision -X
+						if (cb.intersects(new BoundingBox(
+								new Vector3(player.pos.x - widthPlusPadding, wallCollisionYBottom, player.pos.z - widthMinusPadding),
+								new Vector3(player.pos.x + 0, wallCollisionYTop, player.pos.z + widthMinusPadding)
+						))) {
+							player.pos.x += (cb.max.x - (player.pos.x - widthPlusPadding));
+							player.velocity.x = 0;
+						}
+						//Wall Collision +X
+						if (cb.intersects(new BoundingBox(
+								new Vector3(player.pos.x - 0, wallCollisionYBottom, player.pos.z - widthMinusPadding),
+								new Vector3(player.pos.x + widthPlusOnePlusPadding + (padding * 3.999f), wallCollisionYTop, player.pos.z + widthMinusPadding)
+						))) {
+							player.pos.x += (cb.min.x - (player.pos.x + widthPlusOnePlusPadding + (padding * 4)));
+							player.velocity.x = 0;
+						}
+						//Wall Collision -Z
+						if (cb.intersects(new BoundingBox(
+								new Vector3(player.pos.x - widthMinusPadding, wallCollisionYBottom, player.pos.z - widthPlusPadding),
+								new Vector3(player.pos.x + widthMinusPadding, wallCollisionYTop, player.pos.z + 0)
+						))) {
+							player.pos.z += (cb.max.z - (player.pos.z - widthPlusPadding));
+							player.velocity.z = 0;
+						}
+						//Wall Collision +Z
+						if (cb.intersects(new BoundingBox(
+								new Vector3(player.pos.x - widthMinusPadding, wallCollisionYBottom, player.pos.z - 0),
+								new Vector3(player.pos.x + widthMinusPadding, wallCollisionYTop, player.pos.z + widthPlusOnePlusPadding + (padding * 3.999f))
+						))) {
+							player.pos.z += (cb.min.z - (player.pos.z + widthPlusOnePlusPadding + (padding * 4)));
+							player.velocity.z = 0;
+						}
 					}
 				}
-			}
-		});
+			});
+		} catch (Throwable ignored) {
+		}
 		if (keys.contains(62)) {
 			if (player.onGround) {
 				player.velocity.lerp(new Vector3(player.velocity.x, 2.0f, player.velocity.z), 0.1f);
