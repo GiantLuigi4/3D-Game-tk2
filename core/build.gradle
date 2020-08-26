@@ -1,7 +1,7 @@
 apply plugin: "java"
 
 dependencies {
-    implementation "com.github.GiantLuigi4:FlameLoader:ee03e26202"
+    compileOnly "com.github.GiantLuigi4:FlameLoader:1.0"
 }
 
 sourceCompatibility = 1.8

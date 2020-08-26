@@ -48,12 +48,41 @@ project(":game") {
     dependencies {
         implementation project(":core")
 
+        compileOnly "com.badlogicgames.gdx:gdx-backend-lwjgl:$gdxVersion"
+        compileOnly "com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-desktop"
+        compileOnly "com.badlogicgames.gdx:gdx-tools:$gdxVersion"
+        compileOnly "com.badlogicgames.gdx:gdx-controllers-desktop:$gdxVersion"
+        compileOnly "com.badlogicgames.gdx:gdx-controllers-platform:$gdxVersion:natives-desktop"
+        compileOnly "com.badlogicgames.gdx:gdx-bullet-platform:$gdxVersion:natives-desktop"
+    }
+}
+
+project(":launcher") {
+    apply plugin: "java-library"
+
+
+
+    repositories {
+        maven { url 'https://jitpack.io' }
+        maven { url 'https://modmaven.k-4u.nl/' }
+    }
+
+    dependencies {
+        compileOnly project(":core")
+
+        //Launcher libs
         api "com.badlogicgames.gdx:gdx-backend-lwjgl:$gdxVersion"
-        api "com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-desktop"
-        api "com.badlogicgames.gdx:gdx-tools:$gdxVersion"
-        api "com.badlogicgames.gdx:gdx-controllers-desktop:$gdxVersion"
-        api "com.badlogicgames.gdx:gdx-controllers-platform:$gdxVersion:natives-desktop"
-        api "com.badlogicgames.gdx:gdx-bullet-platform:$gdxVersion:natives-desktop"
+        compileOnly "com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-desktop"
+        compileOnly "com.badlogicgames.gdx:gdx-tools:$gdxVersion"
+        compileOnly "com.badlogicgames.gdx:gdx-controllers-desktop:$gdxVersion"
+        compileOnly "com.badlogicgames.gdx:gdx-controllers-platform:$gdxVersion:natives-desktop"
+        compileOnly "com.badlogicgames.gdx:gdx-bullet-platform:$gdxVersion:natives-desktop"
+//        implementation "net.rgsw:noise:1.0.4"
+
+        //Game libs
+        compileOnly "com.badlogicgames.gdx:gdx:$gdxVersion"
+        compileOnly "com.badlogicgames.gdx:gdx-controllers:$gdxVersion"
+        compileOnly "com.badlogicgames.gdx:gdx-bullet:$gdxVersion"
     }
 }
 
@@ -67,11 +96,11 @@ project(":core") {
     }
 
     dependencies {
-        api "com.badlogicgames.gdx:gdx:$gdxVersion"
-        api "com.badlogicgames.gdx:gdx-controllers:$gdxVersion"
-        api "com.badlogicgames.gdx:gdx-bullet:$gdxVersion"
+        compileOnly "com.badlogicgames.gdx:gdx:$gdxVersion"
+        compileOnly "com.badlogicgames.gdx:gdx-controllers:$gdxVersion"
+        compileOnly "com.badlogicgames.gdx:gdx-bullet:$gdxVersion"
 
         //PERLIN NOISE
-        implementation "net.rgsw:noise:1.0.4"
+        compileOnly "net.rgsw:noise:1.0.4"
     }
 }

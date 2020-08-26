@@ -4,11 +4,12 @@ sourceCompatibility = 1.8
 sourceSets.main.java.srcDirs = [ "src/" ]
 sourceSets.main.resources.srcDirs = ["../core/assets"]
 
-project.ext.mainClassName = "com.tfc.desktop.DesktopLauncher"
+project.ext.mainClassName = "com.tfc.launcher.Launch"
 project.ext.assetsDir = new File("../core/assets")
 
 dependencies {
-    compileOnly "com.github.GiantLuigi4:FlameLoader:1.0"
+    compileClasspath "com.github.GiantLuigi4:FlameLoader:1.0"
+    runtimeClasspath "com.github.GiantLuigi4:FlameLoader:1.0"
 }
 
 task run(dependsOn: classes, type: JavaExec) {
@@ -42,4 +43,4 @@ task dist(type: Jar) {
 
 dist.dependsOn classes
 
-eclipse.project.name = appName + "-game"
+eclipse.project.name = appName + "-launcher"
