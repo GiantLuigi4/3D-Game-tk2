@@ -172,7 +172,8 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 			}
 			writer.write(bytes);
 			writer.close();
-		} catch (Throwable ignored) {
+		} catch (Throwable err) {
+			Logger.logErrFull(err);
 		}
 		
 		try {
@@ -422,132 +423,134 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 	
 	@Override
 	public void render() {
-		camera.position.set(player.pos.x, player.pos.y, player.pos.z);
-		camera.direction.set(0, -90, -1);
-		camera.up.set(0, -90, 0);
-		
-		camRotY = Math.max(0, Math.min(180, camRotY));
-		camera.rotate((float) -camRotY, 1, 0, 0);
-		camera.rotate((float) camRotX, 0, 1, 0);
-		
-		camera.update();
-		
-		Gdx.gl.glClearColor(0, 1f, 1f, 1);
-		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT | GL20.GL_DEPTH_BUFFER_BIT);
-		
-		batch.begin(camera);
-		if (ingame) {
-			AtomicInteger bakedInFrame = new AtomicInteger(0);
-			world.chunks.forEach((chunkPos, chunk) -> {
-				if (world.needsRefresh.contains(chunkPos)) {
-					chunkModels.remove(chunkPos);
-					meshDatas.remove(chunkPos);
-				}
-				if (chunkModels.containsKey(chunkPos)) {
-					batch.render(chunkModels.get(chunkPos));
-				} else {
-					if (meshDatas.containsKey(chunkPos)) {
-						chunkModels.put(chunkPos, new ModelInstance(chunk.bake(meshDatas.get(chunkPos))));
-					} else if (bakedInFrame.get() < 16) {
-						ModelInstance instance = new ModelInstance(chunk.bake(chunk.createMesh()));
-						batch.render(instance);
-						chunkModels.put(chunkPos, instance);
-						bakedInFrame.getAndAdd(1);
+		try {
+			camera.position.set(player.pos.x, player.pos.y, player.pos.z);
+			camera.direction.set(0, -90, -1);
+			camera.up.set(0, -90, 0);
+			
+			camRotY = Math.max(0, Math.min(180, camRotY));
+			camera.rotate((float) -camRotY, 1, 0, 0);
+			camera.rotate((float) camRotX, 0, 1, 0);
+			
+			camera.update();
+			
+			Gdx.gl.glClearColor(0, 1f, 1f, 1);
+			Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT | GL20.GL_DEPTH_BUFFER_BIT);
+			
+			batch.begin(camera);
+			if (ingame) {
+				AtomicInteger bakedInFrame = new AtomicInteger(0);
+				world.chunks.forEach((chunkPos, chunk) -> {
+					if (world.needsRefresh.contains(chunkPos)) {
+						chunkModels.remove(chunkPos);
+						meshDatas.remove(chunkPos);
 					}
-				}
-			});
-			world.needsRefresh.clear();
-			Vector3 pos = new Vector3(player.pos.x, player.pos.y, player.pos.z);
-			pos = pos.add(0.5f, 0.5f,0.5f);
-			for (float i = 0; i < 16; i += 0.01f) {
-				pos = pos.add(camera.direction.nor().scl(0.01f));
-				BlockPos pos2 = new BlockPos(pos);
-				if (world.hasChunk(pos2)) {
-					Block block = world.getBlock(pos2);
-					if (block != null) {
-						if (slot < Blocks.count()) {
-							Vector3 posLoc = new Vector3(pos2.x, pos2.y, pos2.z);
-							pos = posLoc.add(pos.sub(posLoc)).sub(camera.direction.nor());
-							Block place = Blocks.getByID(slot);
-							float scale = 1;
-							float undoScale = 1 / scale;
-							boundingBox.transform.scale(scale, scale, scale);
-							boundingBox.transform.setTranslation(
-									pos2.x * 2,
-									pos2.y * 2,
-									pos2.z * 2
-							);
-							batch.render(boundingBox);
-							boundingBox.transform.scale(undoScale, undoScale, undoScale);
-							if (leftDown) {
-								for (float be = 0; be <= 2; be += 0.1f) {
-									Vector3 posPlusX = new Vector3(pos.x+be,pos.y,pos.z);
-									Vector3 posMinusX = new Vector3(pos.x-be,pos.y,pos.z);
-									Vector3 posPlusY = new Vector3(pos.x,pos.y+be,pos.z);
-									Vector3 posMinusY = new Vector3(pos.x,pos.y-be,pos.z);
-									Vector3 posPlusZ = new Vector3(pos.x,pos.y,pos.z+be);
-									Vector3 posMinusZ = new Vector3(pos.x,pos.y,pos.z-be);
-									Block block1 = world.getBlock(new BlockPos(posPlusX));
-									if (block1==null) {
-										world.setBlock(new BlockPos(posPlusX), place);
-										break;
+					if (chunkModels.containsKey(chunkPos)) {
+						batch.render(chunkModels.get(chunkPos));
+					} else {
+						if (meshDatas.containsKey(chunkPos)) {
+							chunkModels.put(chunkPos, new ModelInstance(chunk.bake(meshDatas.get(chunkPos))));
+						} else if (bakedInFrame.get() < 16) {
+							ModelInstance instance = new ModelInstance(chunk.bake(chunk.createMesh()));
+							batch.render(instance);
+							chunkModels.put(chunkPos, instance);
+							bakedInFrame.getAndAdd(1);
+						}
+					}
+				});
+				world.needsRefresh.clear();
+				Vector3 pos = new Vector3(player.pos.x, player.pos.y, player.pos.z);
+				pos = pos.add(0.5f, 0.5f,0.5f);
+				for (float i = 0; i < 16; i += 0.01f) {
+					pos = pos.add(camera.direction.nor().scl(0.01f));
+					BlockPos pos2 = new BlockPos(pos);
+					if (world.hasChunk(pos2)) {
+						Block block = world.getBlock(pos2);
+						if (block != null) {
+							if (slot < Blocks.count()) {
+								Vector3 posLoc = new Vector3(pos2.x, pos2.y, pos2.z);
+								pos = posLoc.add(pos.sub(posLoc)).sub(camera.direction.nor());
+								Block place = Blocks.getByID(slot);
+								float scale = 1;
+								float undoScale = 1 / scale;
+								boundingBox.transform.scale(scale, scale, scale);
+								boundingBox.transform.setTranslation(
+										pos2.x * 2,
+										pos2.y * 2,
+										pos2.z * 2
+								);
+								batch.render(boundingBox);
+								boundingBox.transform.scale(undoScale, undoScale, undoScale);
+								if (leftDown) {
+									for (float be = 0; be <= 2; be += 0.1f) {
+										Vector3 posPlusX = new Vector3(pos.x+be,pos.y,pos.z);
+										Vector3 posMinusX = new Vector3(pos.x-be,pos.y,pos.z);
+										Vector3 posPlusY = new Vector3(pos.x,pos.y+be,pos.z);
+										Vector3 posMinusY = new Vector3(pos.x,pos.y-be,pos.z);
+										Vector3 posPlusZ = new Vector3(pos.x,pos.y,pos.z+be);
+										Vector3 posMinusZ = new Vector3(pos.x,pos.y,pos.z-be);
+										Block block1 = world.getBlock(new BlockPos(posPlusX));
+										if (block1==null) {
+											world.setBlock(new BlockPos(posPlusX), place);
+											break;
+										}
+										block1 = world.getBlock(new BlockPos(posMinusX));
+										if (block1==null) {
+											world.setBlock(new BlockPos(posMinusX), place);
+											break;
+										}
+										block1 = world.getBlock(new BlockPos(posPlusY));
+										if (block1==null) {
+											world.setBlock(new BlockPos(posPlusY), place);
+											break;
+										}
+										block1 = world.getBlock(new BlockPos(posMinusY));
+										if (block1==null) {
+											world.setBlock(new BlockPos(posMinusY), place);
+											break;
+										}
+										block1 = world.getBlock(new BlockPos(posPlusZ));
+										if (block1==null) {
+											world.setBlock(new BlockPos(posPlusZ), place);
+											break;
+										}
+										block1 = world.getBlock(new BlockPos(posMinusZ));
+										if (block1==null) {
+											world.setBlock(new BlockPos(posMinusZ), place);
+											break;
+										}
 									}
-									block1 = world.getBlock(new BlockPos(posMinusX));
-									if (block1==null) {
-										world.setBlock(new BlockPos(posMinusX), place);
-										break;
-									}
-									block1 = world.getBlock(new BlockPos(posPlusY));
-									if (block1==null) {
-										world.setBlock(new BlockPos(posPlusY), place);
-										break;
-									}
-									block1 = world.getBlock(new BlockPos(posMinusY));
-									if (block1==null) {
-										world.setBlock(new BlockPos(posMinusY), place);
-										break;
-									}
-									block1 = world.getBlock(new BlockPos(posPlusZ));
-									if (block1==null) {
-										world.setBlock(new BlockPos(posPlusZ), place);
-										break;
-									}
-									block1 = world.getBlock(new BlockPos(posMinusZ));
-									if (block1==null) {
-										world.setBlock(new BlockPos(posMinusZ), place);
-										break;
-									}
-								}
-								pos = pos.sub(camera.direction.nor());
+									pos = pos.sub(camera.direction.nor());
 //								world.setBlock(new BlockPos(
 //										Math.round(pos.x / 2),
 //										Math.round(pos.y / 2),
 //										Math.round(pos.z / 2)
 //								), place);
-								leftDown = false;
-							} else if (rightDown) {
-								pos = new Vector3(pos2.x, pos2.y, pos2.z);
-								world.setBlock(new BlockPos(
-										Math.round(pos.x),
-										Math.round(pos.y),
-										Math.round(pos.z)
-								), null);
-								rightDown = false;
+									leftDown = false;
+								} else if (rightDown) {
+									pos = new Vector3(pos2.x, pos2.y, pos2.z);
+									world.setBlock(new BlockPos(
+											Math.round(pos.x),
+											Math.round(pos.y),
+											Math.round(pos.z)
+									), null);
+									rightDown = false;
+								}
 							}
+							break;
 						}
-						break;
 					}
 				}
 			}
-		}
-		batch.end();
-		
-		try {
+			batch.end();
+			
 			batch2d.begin();
 			renderEvent.post(batch2d);
 			batch2d.end();
 		} catch (Throwable err) {
 			Logger.logErrFull(err);
+			dispose();
+			Runtime.getRuntime().exit(-1);
 		}
 	}
 	

@@ -14,6 +14,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import static com.tfc.ThreeDeeFirstPersonGame.getInstance;
 
 public class Main {
+	
+	private static boolean isFlying = false;
+	private static boolean releasedSpaceInAir = false;
+	
 	public static void tick(ArrayList<Integer> keys) {
 		Player player = getInstance().player;
 		player.tick();
@@ -106,9 +110,29 @@ public class Main {
 			});
 		} catch (Throwable ignored) {
 		}
-		if (keys.contains(62)) {
+		if (keys.contains(Input.Keys.SPACE)) {
 			if (player.onGround) {
 				player.velocity.lerp(new Vector3(player.velocity.x, 2.0f, player.velocity.z), 0.1f);
+				releasedSpaceInAir = false;
+			} else if (releasedSpaceInAir) {
+				isFlying = true;
+				player.velocity.lerp(new Vector3(player.velocity.x, 2.0f, player.velocity.z), 0.1f);
+			}
+		} else {
+			if (!player.onGround) {
+				releasedSpaceInAir = true;
+			}
+		}
+		if (player.onGround) {
+			isFlying = false;
+			releasedSpaceInAir = false;
+			player.noGravity = false;
+		} else if (isFlying) {
+			player.noGravity = true;
+		}
+		if (keys.contains(Input.Keys.SHIFT_LEFT)) {
+			if (isFlying) {
+				player.velocity.lerp(new Vector3(player.velocity.x, -2.0f, player.velocity.z), 0.1f);
 			}
 		}
 		if (keys.contains(Input.Keys.R)) {

@@ -8,7 +8,7 @@ public class Compression {
 			{"sand", "+"},
 			{"stone", "/"},
 			{"green", ">"},
-			{"st", "<"},
+			{"grass", ";"},
 			{"pos:", "*"},
 			{"on", ")"},
 			{"qe", "("},
