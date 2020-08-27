@@ -1,3 +1,7 @@
 libs/com/badlogicgames/gdx/1.9.11/gdx-platform/gdx-platform-1.9.11-natives-desktop.jar,https://repo1.maven.org/maven2/com/badlogicgames/gdx/gdx-platform/1.9.11/gdx-platform-1.9.11-natives-desktop.jar,
 libs/com/badlogicgames/gdx/1.9.11/gdx-bullet-platform/gdx-platform-1.9.11-natives-desktop.jar,https://repo1.maven.org/maven2/com/badlogicgames/gdx/gdx-bullet-platform/1.9.11/gdx-bullet-platform-1.9.11-natives-desktop.jar,
-libs/com/badlogicgames/gdx/1.9.11/gdx-controllers-platform/gdx-platform-1.9.11-natives-desktop.jar,https://repo1.maven.org/maven2/com/badlogicgames/gdx/gdx-controllers-platform/1.9.11/gdx-controllers-platform-1.9.11-natives-desktop.jar
+libs/com/badlogicgames/gdx/1.9.11/gdx-controllers-platform/gdx-controllers-platform-1.9.11-natives-desktop.jar,https://repo1.maven.org/maven2/com/badlogicgames/gdx/gdx-controllers-platform/1.9.11/gdx-controllers-platform-1.9.11-natives-desktop.jar,
+libs/com/badlogicgames/gdx/1.9.11/gdx-controllers/gdx-controllers-1.9.11.jar,https://repo1.maven.org/maven2/com/badlogicgames/gdx/gdx-controllers/1.9.11/gdx-controllers-1.9.11.jar,
+libs/org/lwjgl/lwjgl/2.9.3/lwjgl-platform-natives-windows/lwjgl-platform-2.9.3-natives-windows.jar,https://repo1.maven.org/maven2/org/lwjgl/lwjgl/lwjgl-platform/2.9.3/lwjgl-platform-2.9.3-natives-windows.jar,
+libs/org/lwjgl/lwjgl/2.9.3/lwjgl-platform-natives-osx/lwjgl-platform-2.9.3-natives-osx.jar,https://repo1.maven.org/maven2/org/lwjgl/lwjgl/lwjgl-platform/2.9.3/lwjgl-platform-2.9.3-natives-osx.jar,
+libs/org/lwjgl/lwjgl/2.9.3/lwjgl-platform-natives-linux/lwjgl-platform-2.9.3-natives-linux.jar,https://repo1.maven.org/maven2/org/lwjgl/lwjgl/lwjgl-platform/2.9.3/lwjgl-platform-2.9.3-natives-linux.jar,

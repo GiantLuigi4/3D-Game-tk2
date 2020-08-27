@@ -10,7 +10,9 @@ import java.io.InputStream;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.Objects;
 import java.util.Scanner;
 
@@ -197,6 +199,14 @@ public class Launch {
 			main.getMethod("launch", String[].class).invoke(null, (Object) arg);
 		} catch (Throwable err) {
 			System.out.println("Could not initialize Flame Mod Loader.");
+			try {
+				File log = new File(dir + "\\logs\\"+"flame " + new SimpleDateFormat("yyyy-MM-dd. hh:mm:ss").format(new Date())+".log");
+				log.getParentFile().mkdirs();
+				log.createNewFile();
+				FileWriter writer = new FileWriter(log);
+				writer.write(FlameConfig.field.getText());
+				writer.close();
+			} catch (Throwable ignored) {}
 			throw new RuntimeException(err);
 		}
 	}

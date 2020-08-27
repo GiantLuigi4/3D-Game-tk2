@@ -14,7 +14,7 @@ public class List<T> {
 	}
 	
 	public T[] toArray(T[] dest) {
-		for (int i=0;i<list.size(); i++) {
+		for (int i = 0; i < list.size(); i++) {
 			dest[i] = list.get(i);
 		}
 		return dest;

@@ -23,6 +23,7 @@ import com.tfc.entity.Player;
 import com.tfc.events.EventBase;
 import com.tfc.events.registry.Registry;
 import com.tfc.events.render.RenderUI;
+import com.tfc.flame.FlameConfig;
 import com.tfc.model.Cube;
 import com.tfc.registry.Blocks;
 import com.tfc.registry.Textures;
@@ -37,10 +38,9 @@ import net.rgsw.ptg.noise.perlin.Perlin2D;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Objects;
-import java.util.Random;
+import java.io.FileWriter;
+import java.text.SimpleDateFormat;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -132,6 +132,16 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 				writer.write(bytes);
 				writer.close();
 			}
+		} catch (Throwable ignored) {
+		}
+		
+		try {
+			File log = new File(dir + "\\logs\\"+"game " + new SimpleDateFormat("yyyy-MM-dd. hh:mm:ss").format(new Date())+".log");
+			log.getParentFile().mkdirs();
+			log.createNewFile();
+			FileWriter writer = new FileWriter(log);
+			writer.write(FlameConfig.field.getText());
+			writer.close();
 		} catch (Throwable ignored) {
 		}
 	}
