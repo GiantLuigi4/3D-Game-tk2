@@ -9,7 +9,7 @@ public class Textures {
 	private static final HashMap<Location, Texture> textures = new HashMap<>();
 	
 	public static RegistryObject<Texture> register(Location name, Texture texture) {
-		return new RegistryObject<>(textures.put(name,texture));
+		return new RegistryObject<>(textures.put(name, texture));
 	}
 	
 	public static Texture get(Location name) {

@@ -12,8 +12,8 @@ public class Location {
 	}
 	
 	public Location(String name) {
-		this.namespace = name.split(":",2)[0].replace(":","");
-		this.location = name.split(":",2)[1].replace(":","");
+		this.namespace = name.split(":", 2)[0].replace(":", "");
+		this.location = name.split(":", 2)[1].replace(":", "");
 	}
 	
 	public String getNamespace() {
@@ -25,7 +25,7 @@ public class Location {
 	}
 	
 	public String toString() {
-		return namespace+":"+location;
+		return namespace + ":" + location;
 	}
 	
 	@Override

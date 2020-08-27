@@ -71,7 +71,7 @@ project(":launcher") {
         compileOnly project(":core")
 
         //Launcher libs
-        api "com.badlogicgames.gdx:gdx-backend-lwjgl:$gdxVersion"
+        compileOnly "com.badlogicgames.gdx:gdx-backend-lwjgl:$gdxVersion"
         compileOnly "com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-desktop"
         compileOnly "com.badlogicgames.gdx:gdx-tools:$gdxVersion"
         compileOnly "com.badlogicgames.gdx:gdx-controllers-desktop:$gdxVersion"

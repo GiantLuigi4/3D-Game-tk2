@@ -20,6 +20,6 @@ public class Block {
 	
 	public BoundingBox getCollisionBox(BlockPos pos) {
 		float scale = 2f;
-		return new BoundingBox(new Vector3(pos.x*scale,pos.y*scale,pos.z*scale),new Vector3(pos.x*scale+scale,pos.y*scale+scale,pos.z*scale+scale));
+		return new BoundingBox(new Vector3(pos.x * scale, pos.y * scale, pos.z * scale), new Vector3(pos.x * scale + scale, pos.y * scale + scale, pos.z * scale + scale));
 	}
 }

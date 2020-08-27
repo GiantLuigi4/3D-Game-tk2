@@ -41,6 +41,6 @@ public class EventBase {
 	}
 	
 	public void forEachListener(BiConsumer<Location, Consumer<? super EventBase>> consumer1) {
-		this.listeners.forEach(consumer1::accept);
+		this.listeners.forEach(consumer1);
 	}
 }

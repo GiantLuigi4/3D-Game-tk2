@@ -8,7 +8,7 @@ project.ext.mainClassName = "com.tfc.desktop.DesktopLauncher"
 project.ext.assetsDir = new File("../core/assets")
 
 dependencies {
-    compileOnly "com.github.GiantLuigi4:FlameLoader:1.0"
+    compileOnly "com.github.GiantLuigi4:FlameLoader:1.1"
 }
 
 task run(dependsOn: classes, type: JavaExec) {

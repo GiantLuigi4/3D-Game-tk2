@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.Objects;
 import java.util.Scanner;
+import java.util.jar.JarFile;
 
 public class Launch {
 	public static FlameURLLoader loader;
@@ -25,14 +26,39 @@ public class Launch {
 							new File(dir + "\\build.gradle").exists()
 					);
 	
+	private static ArrayList<String> versionsArray = getVersionsArray();
+	
+	private static ArrayList<String> getVersionsArray() {
+		try {
+			ArrayList<String> strings = new ArrayList<>();
+			strings.add("https://github.com/GiantLuigi4/3D-Game-tk2/files/5133581/0.1.zip");
+			strings.add("https://github.com/GiantLuigi4/3D-Game-tk2/files/5133628/0.2.zip");
+			File fi = new File(dir + "\\version_downloads.txt");
+			if (!fi.exists()) fi.createNewFile();
+			Scanner sc = new Scanner(fi);
+			while (sc.hasNextLine()) {
+				strings.add(sc.nextLine());
+			}
+			sc.close();
+			return strings;
+		} catch (Throwable err) {
+			err.printStackTrace();
+			Runtime.getRuntime().exit(-1);
+//			throw new RuntimeException(err);
+		}
+		return null;
+	}
+	
 	public static void main(String[] arg) {
+		System.setProperty("-Djavax.net.ssl.trustStore", "trustStore");
 		File versionLaunch = new File(dir + "\\version.txt");
 		String versionJar = "";
+		
 		if (!versionLaunch.exists()) {
 			try {
 				versionLaunch.createNewFile();
 				FileWriter writer = new FileWriter(versionLaunch);
-				writer.write("1.0.jar");
+				writer.write("0.2.zip");
 				writer.close();
 			} catch (Throwable ignored) {
 			}
@@ -51,9 +77,20 @@ public class Launch {
 				urls.add(new File(dir + "\\game\\build\\classes\\java\\main").toURL());
 				urls.add(new File(dir + "\\core\\build\\classes\\java\\main").toURL());
 			} else {
-				File f = new File(dir + "\\versions\\" + versionJar);
+				File f = new File(dir + "\\versions\\" + (versionJar.replace(".zip", ".jar")));
 				urls.add(f.toURL());
-				if (!f.exists()) f.getParentFile().mkdirs();
+				if (!f.exists()) {
+					f.getParentFile().mkdirs();
+					f.createNewFile();
+					for (String s : versionsArray) {
+						if (s.endsWith(versionJar)) {
+							URL url1 = new URL(s.replace("" + File.separatorChar, "/"));
+							System.out.println(url1.toString());
+							//https://stackabuse.com/how-to-download-a-file-from-a-url-in-java/
+							Files.copy(url1.openStream(), f.toPath(), StandardCopyOption.REPLACE_EXISTING);
+						}
+					}
+				}
 			}
 			
 			FlameConfig.field = new FlameLog();
@@ -67,15 +104,17 @@ public class Launch {
 				urls.add(fi1.toURL());
 				mods.add(fi1.getPath());
 			}
-			loader = new FlameURLLoader(urls.toArray(new URL[urls.size()]));
 			ArrayList<Object> mods_list = new ArrayList<>();
-			InputStream stream = loader.getResourceAsStream("version/dependencies.csv");
+			JarFile jarFile = new JarFile(dir + "\\versions\\" + (versionJar.replace(".zip", ".jar")));
+//			InputStream stream = loader.getResourceAsStream("version/dependencies.csv");
+			InputStream stream = jarFile.getInputStream(jarFile.getEntry("version/dependencies.csv"));
 			Scanner sc = new Scanner(stream);
 			StringBuilder dependencies = new StringBuilder();
 			while (sc.hasNextLine()) {
 				dependencies.append(sc.nextLine().replace("\n", ""));
 			}
-			InputStream stream2 = loader.getResourceAsStream("version/moredeps.csv");
+//			InputStream stream2 = loader.getResourceAsStream("version/moredeps.csv");
+			InputStream stream2 = jarFile.getInputStream(jarFile.getEntry("version/moredeps.csv"));
 			Scanner sc2 = new Scanner(stream2);
 			StringBuilder dependencies2 = new StringBuilder();
 			while (sc2.hasNextLine()) {
@@ -85,6 +124,7 @@ public class Launch {
 			sc2.close();
 			stream.close();
 			stream2.close();
+			jarFile.close();
 			String repo = "";
 			for (String s : dependencies.toString().split(",")) {
 				try {
@@ -98,7 +138,7 @@ public class Launch {
 						info[2] = info[2].replace("" + File.separatorChar, ".");
 						s1 = info[0] + File.separatorChar + info[2] + File.separatorChar + info[1] + File.separatorChar + info[1] + "-" + info[2] + ".jar";
 						String urlS = info[0] + File.separatorChar + info[1] + File.separatorChar + info[2] + File.separatorChar + info[1] + "-" + info[2] + ".jar";
-						File output = new File(dir + File.separatorChar + "libs" + File.separatorChar + s1);
+						File output = new File((dir + File.separatorChar + "libs" + File.separatorChar + s1).replace(".jar", ".zip"));
 						if (!output.exists()) {
 							output.getParentFile().mkdirs();
 							output.createNewFile();
@@ -113,7 +153,7 @@ public class Launch {
 								err.printStackTrace();
 							}
 						}
-						loader.addURL(output.toURL());
+						urls.add(output.toURL());
 						repo = "";
 					}
 				} catch (Throwable err) {
@@ -127,7 +167,7 @@ public class Launch {
 					if (file.equals("")) {
 						file = s;
 					} else {
-						File output = new File(dir + File.separatorChar + file.replace("/", "" + File.separatorChar));
+						File output = new File((dir + File.separatorChar + file.replace("/", "" + File.separatorChar).replace(".jar", ".zip")));
 						if (!output.exists()) {
 							output.getParentFile().mkdirs();
 							output.createNewFile();
@@ -142,7 +182,7 @@ public class Launch {
 								err.printStackTrace();
 							}
 						}
-						loader.addURL(output.toURL());
+						urls.add(output.toURL());
 						file = "";
 					}
 				} catch (Throwable err) {
@@ -150,6 +190,7 @@ public class Launch {
 					file = "";
 				}
 			}
+			loader = new FlameURLLoader(urls.toArray(new URL[urls.size()]));
 			try {
 				for (String s : mods) {
 					File fi1 = new File(s);
@@ -200,13 +241,14 @@ public class Launch {
 		} catch (Throwable err) {
 			System.out.println("Could not initialize Flame Mod Loader.");
 			try {
-				File log = new File(dir + "\\logs\\"+"flame " + new SimpleDateFormat("yyyy-MM-dd. hh:mm:ss").format(new Date())+".log");
+				File log = new File(dir + "\\logs\\" + "flame " + new SimpleDateFormat("yyyy-MM-dd. hh:mm:ss").format(new Date()) + ".log");
 				log.getParentFile().mkdirs();
 				log.createNewFile();
 				FileWriter writer = new FileWriter(log);
 				writer.write(FlameConfig.field.getText());
 				writer.close();
-			} catch (Throwable ignored) {}
+			} catch (Throwable ignored) {
+			}
 			throw new RuntimeException(err);
 		}
 	}

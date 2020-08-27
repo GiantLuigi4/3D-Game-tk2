@@ -21,7 +21,9 @@ public class Compression {
 			{"de", "!"},
 			{"-1", "\""},
 			{"-6", "{"},
-			{"-4", "}"}
+			{"-4", "}"},
+			{"vel:", "\\"},
+			{"rot:", "~"}
 	};
 	
 	public static String compress(String text) {
