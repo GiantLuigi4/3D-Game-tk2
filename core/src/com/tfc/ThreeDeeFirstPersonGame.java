@@ -17,7 +17,6 @@ import com.badlogic.gdx.graphics.g3d.attributes.BlendingAttribute;
 import com.badlogic.gdx.graphics.g3d.attributes.ColorAttribute;
 import com.badlogic.gdx.graphics.g3d.utils.MeshBuilder;
 import com.badlogic.gdx.graphics.g3d.utils.ModelBuilder;
-import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.Vector3;
 import com.tfc.blocks.Block;
 import com.tfc.blocks.BlockPos;
@@ -80,6 +79,10 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 		Blocks.register(new Block(new Location(namespace + ":" + name), Cube.createModel(Textures.get(new Location(namespace + ":" + name)))));
 	}
 	
+	private static void registerTransparent(String name) {
+		Blocks.register(new Block(new Location(namespace + ":" + name), Cube.createTransparentModel(Textures.get(new Location(namespace + ":" + name)))));
+	}
+	
 	private final ArrayList<Integer> keys = new ArrayList<>();
 	
 	boolean leftDown = false;
@@ -105,6 +108,7 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 		Textures.register(new Location(namespace + ":green_sand"), new Texture("assets\\blocks\\green_sand.png"));
 		Textures.register(new Location(namespace + ":sand_stone"), new Texture("assets\\blocks\\sand_stone.png"));
 		Textures.register(new Location(namespace + ":grass"), new Texture("assets\\blocks\\grass.png"));
+		Textures.register(new Location(namespace + ":glass"), new Texture("assets\\blocks\\glass.png"));
 		Textures.register(new Location(namespace + ":bounding_box"), new Texture("assets\\ui\\bounding_box\\black_border.png"));
 		Textures.register(new Location(namespace + ":hotbar"), new Texture("assets\\ui\\ingame\\hotbar_slot.png"));
 		Textures.register(new Location(namespace + ":button"), new Texture("assets\\ui\\menu\\button.png"));
@@ -115,6 +119,7 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 		register("green_sand");
 		register("sand_stone");
 		register("grass");
+		registerTransparent("glass");
 		
 		boundingBox = Cube.createModel(Textures.get(new Location(namespace + ":bounding_box")));
 		
@@ -459,8 +464,8 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 					}
 				});
 				world.needsRefresh.clear();
-				Vector3 pos = new Vector3(player.pos.x, player.pos.y, player.pos.z);
-				pos = pos.add(0.5f, 0.5f,0.5f);
+				Vector3 pos = new Vector3(player.pos.x / 2, player.pos.y / 2, player.pos.z / 2);
+				pos = pos.add(player.pos.x <= 0 ? -0.5f : 0.5f, 0.5f, player.pos.z <= 0 ? -0.5f : 0.5f);
 				for (float i = 0; i < 16; i += 0.01f) {
 					pos = pos.add(camera.direction.nor().scl(0.01f));
 					BlockPos pos2 = new BlockPos(pos);

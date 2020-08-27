@@ -16,9 +16,9 @@ public class BlockPos {
 	}
 	
 	public BlockPos(Vector3 pos) {
-		this.x = (int) (pos.x/2);
-		this.y = (int) (pos.y/2);
-		this.z = (int) (pos.z/2);
+		this.x = (int) (pos.x);
+		this.y = (int) (pos.y);
+		this.z = (int) (pos.z);
 	}
 	
 	@Override
