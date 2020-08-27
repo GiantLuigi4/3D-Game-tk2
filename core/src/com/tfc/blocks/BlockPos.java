@@ -1,5 +1,7 @@
 package com.tfc.blocks;
 
+import com.badlogic.gdx.math.Vector3;
+
 import java.util.Objects;
 
 public class BlockPos {
@@ -11,6 +13,12 @@ public class BlockPos {
 		this.x = x;
 		this.y = y;
 		this.z = z;
+	}
+	
+	public BlockPos(Vector3 pos) {
+		this.x = (int) (pos.x/2);
+		this.y = (int) (pos.y/2);
+		this.z = (int) (pos.z/2);
 	}
 	
 	@Override

@@ -3,6 +3,7 @@ package com.tfc.launcher;
 import com.tfc.flame.FlameConfig;
 import com.tfc.flame.FlameLog;
 import com.tfc.flame.FlameURLLoader;
+import com.tfc.utils.Logger;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -42,7 +43,7 @@ public class Launch {
 			sc.close();
 			return strings;
 		} catch (Throwable err) {
-			err.printStackTrace();
+			FlameConfig.logError(err);
 			Runtime.getRuntime().exit(-1);
 //			throw new RuntimeException(err);
 		}
@@ -50,6 +51,8 @@ public class Launch {
 	}
 	
 	public static void main(String[] arg) {
+		FlameConfig.field = new FlameLog();
+		
 		System.setProperty("-Djavax.net.ssl.trustStore", "trustStore");
 		File versionLaunch = new File(dir + "\\version.txt");
 		String versionJar = "";
@@ -76,6 +79,9 @@ public class Launch {
 			if (isDev) {
 				urls.add(new File(dir + "\\game\\build\\classes\\java\\main").toURL());
 				urls.add(new File(dir + "\\core\\build\\classes\\java\\main").toURL());
+				urls.add(new File(dir + "\\Launcher\\build\\classes\\java\\main").toURL());
+				File f = new File(dir + "\\versions\\" + (versionJar.replace(".zip", ".jar")));
+				urls.add(f.toURL());
 			} else {
 				File f = new File(dir + "\\versions\\" + (versionJar.replace(".zip", ".jar")));
 				urls.add(f.toURL());
@@ -92,8 +98,6 @@ public class Launch {
 					}
 				}
 			}
-			
-			FlameConfig.field = new FlameLog();
 			
 			File fi = new File(dir + "\\flame_mods");
 			if (!fi.exists()) {
@@ -150,14 +154,14 @@ public class Launch {
 								//https://stackabuse.com/how-to-download-a-file-from-a-url-in-java/
 								Files.copy(url1.openStream(), output.toPath(), StandardCopyOption.REPLACE_EXISTING);
 							} catch (Throwable err) {
-								err.printStackTrace();
+								FlameConfig.logError(err);
 							}
 						}
 						urls.add(output.toURL());
 						repo = "";
 					}
 				} catch (Throwable err) {
-					err.printStackTrace();
+					FlameConfig.logError(err);
 					repo = "";
 				}
 			}
@@ -179,14 +183,14 @@ public class Launch {
 								//https://stackabuse.com/how-to-download-a-file-from-a-url-in-java/
 								Files.copy(url1.openStream(), output.toPath(), StandardCopyOption.REPLACE_EXISTING);
 							} catch (Throwable err) {
-								err.printStackTrace();
+								FlameConfig.logError(err);
 							}
 						}
 						urls.add(output.toURL());
 						file = "";
 					}
 				} catch (Throwable err) {
-					err.printStackTrace();
+					FlameConfig.logError(err);
 					file = "";
 				}
 			}
@@ -235,11 +239,12 @@ public class Launch {
 				}
 			}
 			
-			System.out.println("Initializing Flame.");
+			FlameConfig.field.append("Initializing Flame."+"\n");
 			Class<?> main = loader.loadClass("com.tfc.desktop.Launch");
 			main.getMethod("launch", String[].class).invoke(null, (Object) arg);
 		} catch (Throwable err) {
-			System.out.println("Could not initialize Flame Mod Loader.");
+			FlameConfig.field.append("Could not initialize Flame Mod Loader."+"\n");
+			FlameConfig.logError(err);
 			try {
 				File log = new File(dir + "\\logs\\" + "flame " + new SimpleDateFormat("yyyy-MM-dd. hh:mm:ss").format(new Date()) + ".log");
 				log.getParentFile().mkdirs();

@@ -17,6 +17,7 @@ import com.badlogic.gdx.graphics.g3d.attributes.BlendingAttribute;
 import com.badlogic.gdx.graphics.g3d.attributes.ColorAttribute;
 import com.badlogic.gdx.graphics.g3d.utils.MeshBuilder;
 import com.badlogic.gdx.graphics.g3d.utils.ModelBuilder;
+import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.Vector3;
 import com.tfc.blocks.Block;
 import com.tfc.blocks.BlockPos;
@@ -175,13 +176,14 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 		}
 		
 		try {
-			File log = new File(dir + "\\logs\\" + "game " + new SimpleDateFormat("yyyy-MM-dd. hh:mm:ss").format(new Date()) + ".log");
+			File log = new File(dir + "\\logs\\" + "game " + new SimpleDateFormat("yyyy-MM-dd. hh:mm:ss").format(new Date()).replace(":","'") + ".log");
 			log.getParentFile().mkdirs();
 			log.createNewFile();
 			FileWriter writer = new FileWriter(log);
 			writer.write(FlameConfig.field.getText());
 			writer.close();
-		} catch (Throwable ignored) {
+		} catch (Throwable err) {
+			err.printStackTrace();
 		}
 	}
 	
@@ -256,7 +258,7 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 					Block block = Blocks.getByID(i);
 					Texture texture = Textures.get(block.getName());
 					int size = 36;
-					batch2d.draw(texture, 102 + ((size + 12) * i), 6, size, size, 0, 0, texture.getWidth(), texture.getHeight());
+					batch2d.draw(texture, 102 + ((size + 12) * i), 6, size, size);
 				}
 			}
 		} else {
@@ -293,7 +295,8 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 									}
 								}
 							}
-						} catch (Throwable ignored) {
+						} catch (Throwable err) {
+							Logger.logErrFull(err);
 						}
 						
 						
@@ -327,7 +330,8 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 							}
 							writer.write(bytes);
 							writer.close();
-						} catch (Throwable ignored) {
+						} catch (Throwable err) {
+							Logger.logErrFull(err);
 						}
 						try {
 							File player = new File(dir + "\\saves\\.demo_save\\players\\player1.data");
@@ -342,7 +346,8 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 							}
 							writer.write(bytes);
 							writer.close();
-						} catch (Throwable ignored) {
+						} catch (Throwable err) {
+							Logger.logErrFull(err);
 						}
 					} else {
 						try {
@@ -397,7 +402,8 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 									Logger.logErrFull(err);
 								}
 							}
-						} catch (Throwable ignored) {
+						} catch (Throwable err) {
+							Logger.logErrFull(err);
 						}
 					}
 					
@@ -452,41 +458,17 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 			});
 			world.needsRefresh.clear();
 			Vector3 pos = new Vector3(player.pos.x, player.pos.y, player.pos.z);
-			for (int i = 0; i < 16; i += 1) {
-				pos = pos.add(camera.direction.nor());
-//				BlockPos pos1 = new BlockPos(
-//						(int)Math.ceil(pos.x)/2,
-//						(int)Math.ceil(pos.y)/2,
-//						(int)Math.ceil(pos.z)/2
-//				);
-				BlockPos pos2 = new BlockPos(
-						Math.round(pos.x) / 2,
-						Math.round(pos.y) / 2,
-						Math.round(pos.z) / 2
-				);
-//				BlockPos pos3 = new BlockPos(
-//						(int)Math.floor(pos.x)/2,
-//						(int)Math.floor(pos.y)/2,
-//						(int)Math.floor(pos.z)/2
-//				);
-				if (world.hasChunk(pos2)
-//						|| world.hasChunk(pos1) || world.hasChunk(pos3)
-				) {
+			pos = pos.add(0.5f, 0.5f,0.5f);
+			for (float i = 0; i < 16; i += 0.01f) {
+				pos = pos.add(camera.direction.nor().scl(0.01f));
+				BlockPos pos2 = new BlockPos(pos);
+				if (world.hasChunk(pos2)) {
 					Block block = world.getBlock(pos2);
-//					if (block == null) {
-//						block = world.getBlock(pos1);
-//						pos2 = pos1;
-//					}
-//					if (block == null) {
-//						block = world.getBlock(pos3);
-//						pos2 = pos3;
-//					}
 					if (block != null) {
 						if (slot < Blocks.count()) {
 							Vector3 posLoc = new Vector3(pos2.x, pos2.y, pos2.z);
 							pos = posLoc.add(pos.sub(posLoc)).sub(camera.direction.nor());
 							Block place = Blocks.getByID(slot);
-//							ModelInstance instance = place.modelInstance;
 							float scale = 1;
 							float undoScale = 1 / scale;
 							boundingBox.transform.scale(scale, scale, scale);
@@ -498,12 +480,50 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 							batch.render(boundingBox);
 							boundingBox.transform.scale(undoScale, undoScale, undoScale);
 							if (leftDown) {
+								for (float be = 0; be <= 2; be += 0.1f) {
+									Vector3 posPlusX = new Vector3(pos.x+be,pos.y,pos.z);
+									Vector3 posMinusX = new Vector3(pos.x-be,pos.y,pos.z);
+									Vector3 posPlusY = new Vector3(pos.x,pos.y+be,pos.z);
+									Vector3 posMinusY = new Vector3(pos.x,pos.y-be,pos.z);
+									Vector3 posPlusZ = new Vector3(pos.x,pos.y,pos.z+be);
+									Vector3 posMinusZ = new Vector3(pos.x,pos.y,pos.z-be);
+									Block block1 = world.getBlock(new BlockPos(posPlusX));
+									if (block1==null) {
+										world.setBlock(new BlockPos(posPlusX), place);
+										break;
+									}
+									block1 = world.getBlock(new BlockPos(posMinusX));
+									if (block1==null) {
+										world.setBlock(new BlockPos(posMinusX), place);
+										break;
+									}
+									block1 = world.getBlock(new BlockPos(posPlusY));
+									if (block1==null) {
+										world.setBlock(new BlockPos(posPlusY), place);
+										break;
+									}
+									block1 = world.getBlock(new BlockPos(posMinusY));
+									if (block1==null) {
+										world.setBlock(new BlockPos(posMinusY), place);
+										break;
+									}
+									block1 = world.getBlock(new BlockPos(posPlusZ));
+									if (block1==null) {
+										world.setBlock(new BlockPos(posPlusZ), place);
+										break;
+									}
+									block1 = world.getBlock(new BlockPos(posMinusZ));
+									if (block1==null) {
+										world.setBlock(new BlockPos(posMinusZ), place);
+										break;
+									}
+								}
 								pos = pos.sub(camera.direction.nor());
-								world.setBlock(new BlockPos(
-										Math.round(pos.x / 2),
-										Math.round(pos.y / 2),
-										Math.round(pos.z / 2)
-								), place);
+//								world.setBlock(new BlockPos(
+//										Math.round(pos.x / 2),
+//										Math.round(pos.y / 2),
+//										Math.round(pos.z / 2)
+//								), place);
 								leftDown = false;
 							} else if (rightDown) {
 								pos = new Vector3(pos2.x, pos2.y, pos2.z);
@@ -522,9 +542,13 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 		}
 		batch.end();
 		
-		batch2d.begin();
-		renderEvent.post(batch2d);
-		batch2d.end();
+		try {
+			batch2d.begin();
+			renderEvent.post(batch2d);
+			batch2d.end();
+		} catch (Throwable err) {
+			Logger.logErrFull(err);
+		}
 	}
 	
 	@Override

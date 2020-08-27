@@ -135,4 +135,5 @@ Thumbs.db
 /version.txt
 /version_downloads.txt
 /libs/
-/version.txt
+/logs/
+/versions/
