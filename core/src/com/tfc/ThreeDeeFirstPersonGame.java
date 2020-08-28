@@ -15,6 +15,7 @@ import com.badlogic.gdx.graphics.g3d.ModelBatch;
 import com.badlogic.gdx.graphics.g3d.ModelInstance;
 import com.badlogic.gdx.graphics.g3d.attributes.BlendingAttribute;
 import com.badlogic.gdx.graphics.g3d.attributes.ColorAttribute;
+import com.badlogic.gdx.graphics.g3d.environment.PointLight;
 import com.badlogic.gdx.graphics.g3d.utils.MeshBuilder;
 import com.badlogic.gdx.graphics.g3d.utils.ModelBuilder;
 import com.badlogic.gdx.math.Vector3;
@@ -27,11 +28,13 @@ import com.tfc.events.registry.Registry;
 import com.tfc.events.render.RenderUI;
 import com.tfc.flame.FlameConfig;
 import com.tfc.model.Cube;
+import com.tfc.model.Triangle;
 import com.tfc.registry.Blocks;
 import com.tfc.registry.Textures;
 import com.tfc.utils.*;
 import com.tfc.world.Chunk;
 import com.tfc.world.ChunkPos;
+import com.tfc.world.TerrainTriangle;
 import com.tfc.world.World;
 import net.rgsw.ptg.noise.perlin.Perlin2D;
 
@@ -102,30 +105,7 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 	
 	private ModelInstance boundingBox = null;
 	
-	private void register(EventBase eventBase) {
-		Textures.register(new Location(namespace + ":sand"), new Texture("assets\\blocks\\fine_sand.png"));
-		Textures.register(new Location(namespace + ":stone"), new Texture("assets\\blocks\\stone.png"));
-		Textures.register(new Location(namespace + ":green_sand"), new Texture("assets\\blocks\\green_sand.png"));
-		Textures.register(new Location(namespace + ":sand_stone"), new Texture("assets\\blocks\\sand_stone.png"));
-		Textures.register(new Location(namespace + ":grass"), new Texture("assets\\blocks\\grass.png"));
-		Textures.register(new Location(namespace + ":glass"), new Texture("assets\\blocks\\glass.png"));
-		Textures.register(new Location(namespace + ":bounding_box"), new Texture("assets\\ui\\bounding_box\\black_border.png"));
-		Textures.register(new Location(namespace + ":hotbar"), new Texture("assets\\ui\\ingame\\hotbar_slot.png"));
-		Textures.register(new Location(namespace + ":button"), new Texture("assets\\ui\\menu\\button.png"));
-		Textures.register(new Location(namespace + ":button_hovered"), new Texture("assets\\ui\\menu\\button_hovered.png"));
-		
-		register("sand");
-		register("stone");
-		register("green_sand");
-		register("sand_stone");
-		register("grass");
-		registerTransparent("glass");
-		
-		boundingBox = Cube.createModel(Textures.get(new Location(namespace + ":bounding_box")));
-		
-		//https://stackoverflow.com/questions/19112349/libgdx-3d-texture-transparency
-		boundingBox.materials.get(0).set(new BlendingAttribute(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA));
-	}
+	private static PointLight playerLight = new PointLight();
 	
 	@Override
 	public void dispose() {
@@ -197,6 +177,7 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 	public double camRotX = 0;
 	public double camRotY = 45;
 	public double camRotZ = 0;
+	public final ArrayList<TerrainTriangle> terrain = new ArrayList<>();
 	
 	@Override
 	public boolean keyDown(int keycode) {
@@ -207,9 +188,84 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 		return false;
 	}
 	
+	private ModelInstance instance;
+	
+	private void register(EventBase eventBase) {
+		Textures.register(new Location(namespace + ":sand"), new Texture("assets\\blocks\\fine_sand.png"));
+		Textures.register(new Location(namespace + ":stone"), new Texture("assets\\blocks\\stone.png"));
+		Textures.register(new Location(namespace + ":green_sand"), new Texture("assets\\blocks\\green_sand.png"));
+		Textures.register(new Location(namespace + ":sand_stone"), new Texture("assets\\blocks\\sand_stone.png"));
+		Textures.register(new Location(namespace + ":grass"), new Texture("assets\\blocks\\grass.png"));
+		Textures.register(new Location(namespace + ":glass"), new Texture("assets\\blocks\\glass.png"));
+		Textures.register(new Location(namespace + ":debug_one"), new Texture("assets\\blocks\\debug\\debug1.png"));
+		Textures.register(new Location(namespace + ":bounding_box"), new Texture("assets\\ui\\bounding_box\\black_border.png"));
+		Textures.register(new Location(namespace + ":hotbar"), new Texture("assets\\ui\\ingame\\hotbar_slot.png"));
+		Textures.register(new Location(namespace + ":button"), new Texture("assets\\ui\\menu\\button.png"));
+		Textures.register(new Location(namespace + ":button_hovered"), new Texture("assets\\ui\\menu\\button_hovered.png"));
+		
+		register("sand");
+		register("stone");
+		register("green_sand");
+		register("sand_stone");
+		register("grass");
+		registerTransparent("glass");
+		
+		instance = Triangle.createTriangle(
+				new Vector3(0, 0, 0),
+				new Vector3(0, 0, 1),
+				new Vector3(0, 1, 1),
+				Textures.get(new Location(namespace + ":stone"))
+		);
+		
+		boundingBox = Cube.createModel(Textures.get(new Location(namespace + ":bounding_box")));
+		
+		//https://stackoverflow.com/questions/19112349/libgdx-3d-texture-transparency
+		boundingBox.materials.get(0).set(new BlendingAttribute(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA));
+	}
+	
 	@Override
 	public void create() {
 		try {
+			
+			File vert = new File(dir + "\\shaders\\vert.glsl");
+			File frag = new File(dir + "\\shaders\\frag.glsl");
+			
+			if (!vert.exists()) {
+				vert.getParentFile().mkdirs();
+				vert.createNewFile();
+				FileWriter writer = new FileWriter(vert);
+				//TODO: learn glsl
+				//https://gamedev.stackexchange.com/questions/117052/libgdx-efficient-colored-rectangle-rendering
+				writer.write("attribute vec4 a_position;\nattribute vec4 a_color;\nvarying vec4 v_color;\n\nvoid main() {\n   v_color = a_color;\n   gl_Position =  a_position;\n}");
+				writer.close();
+			}
+			if (!frag.exists()) {
+				frag.getParentFile().mkdirs();
+				frag.createNewFile();
+				FileWriter writer = new FileWriter(frag);
+				//https://gamedev.stackexchange.com/questions/117052/libgdx-efficient-colored-rectangle-rendering
+				//TODO: learn glsl
+				writer.write("#ifdef GL_ES\nprecision mediump float;\n#endif\nvarying vec4 v_color;\n\nvoid main() {\n  gl_FragColor = v_color;\n}");
+				writer.close();
+			}
+			
+			StringBuilder vertText = new StringBuilder();
+			if (vert.exists()) {
+				Scanner sc = new Scanner(vert);
+				while (sc.hasNextLine()) {
+					vertText.append(sc.nextLine());
+				}
+				sc.close();
+			}
+			StringBuilder fragText = new StringBuilder();
+			if (vert.exists()) {
+				Scanner sc = new Scanner(frag);
+				while (sc.hasNextLine()) {
+					fragText.append(sc.nextLine());
+				}
+				sc.close();
+			}
+			
 			INSTANCE = this;
 			
 			modelBuilder = new ModelBuilder();
@@ -228,6 +284,7 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 			camera.far = 3000f;
 			
 			batch2d = new SpriteBatch();
+//			batch = new ModelBatch(vertText.toString(), fragText.toString());
 			batch = new ModelBatch();
 			stack = new TransformStack(batch2d);
 			
@@ -239,6 +296,7 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 			
 			environment = new Environment();
 			environment.set(new ColorAttribute(ColorAttribute.AmbientLight, 0.8f, 0.8f, 0.8f, 1f));
+			environment.add(playerLight);
 			
 			spritehotbar = new Sprite(hotbar);
 			
@@ -281,13 +339,35 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 					if (!file.exists()) {
 						try {
 							file.mkdirs();
-							int size = 6;
+							int size = 64;
 							Perlin2D noise = new Perlin2D(new Random().nextInt(), 30, 30);
 							for (int x = -size; x <= size; x++) {
 								for (int z = -size; z <= size; z++) {
-									int yPos = Math.abs(z) == (size - 2) ? 2 : Math.abs(x) == (size - 2) ? 2 : 0;
-//									int yPos = ((int) (noise.generate(x / 16f, z / 16f) * 32) + 16);
+									float scale = 1f;
+									float yPosTerrain1 = ((float) (noise.generate(x / scale, z / scale) * 32) + 16);
+									float yPosTerrain2 = ((float) (noise.generate((x + 1) / scale, z / scale) * 32) + 16);
+									float yPosTerrain3 = ((float) (noise.generate((x + 1) / scale, (z + 1) / scale) * 32) + 16);
+									float yPosTerrain4 = ((float) (noise.generate(x / scale, (z + 1) / scale) * 32) + 16);
+									float x0z0 = yPosTerrain1;
+									float x1z0 = yPosTerrain2;
+									float x1z1 = yPosTerrain3;
+									float x0z1 = yPosTerrain4;
+									terrain.add(new TerrainTriangle(
+											new Vector3((x + 1) * 2, x1z1, (z + 1) * 2),
+											new Vector3((x + 1) * 2, x1z0, z * 2),
+											new Vector3(x * 2, x0z0, z * 2),
+											new Location(namespace + ":sand")
+									));
+									terrain.add(new TerrainTriangle(
+											new Vector3((x) * 2, x0z0, z * 2),
+											new Vector3((x) * 2, x0z1, (z + 1) * 2),
+											new Vector3((x + 1) * 2, x1z1, (z + 1) * 2),
+											new Location(namespace + ":green_sand")
+									));
 //									int y = yPos;
+									
+									
+									int yPos = Math.abs(z) == (size - 2) ? 2 : Math.abs(x) == (size - 2) ? 2 : 0;
 									for (int y = 0; y <= yPos; y++) {
 										if (new Random().nextDouble() >= 0.75) {
 											world.setBlock(new BlockPos(x, y, z), Blocks.get(new Location(namespace + ":sand")));
@@ -320,22 +400,38 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 							}
 						});
 						
+						StringBuilder terrainS = new StringBuilder();
+						for (TerrainTriangle tri : terrain) {
+							terrainS.append(tri.toString()).append("\n");
+						}
+						
 						String saveData = saveDataBuilder.toString();
 //						System.out.println(Compression.makeIllegible(Compression.compress(saveData)));
 //						System.out.println(Compression.makeLegible(Compression.makeIllegible(Compression.compress(saveData))));
 						File file1 = new File(dir + "\\saves\\.demo_save\\save.data");
+						File fileT = new File(dir + "\\saves\\.demo_save\\terrain.data");
 						
 						try {
 							file1.createNewFile();
+							fileT.createNewFile();
 							FileOutputStream writer = new FileOutputStream(file1);
+							FileOutputStream writer2 = new FileOutputStream(fileT);
 							String text = Compression.makeIllegible(Compression.compress(saveData));
+							String text2 = Compression.makeIllegible((terrainS.toString()));
 							char[] chars = text.toCharArray();
+							char[] chars2 = text2.toCharArray();
 							byte[] bytes = new byte[chars.length];
+							byte[] bytes2 = new byte[chars2.length];
 							for (int i = 0; i < chars.length; i++) {
 								bytes[i] = (byte) chars[i];
 							}
+							for (int i = 0; i < chars2.length; i++) {
+								bytes2[i] = (byte) chars2[i];
+							}
 							writer.write(bytes);
+							writer2.write(bytes2);
 							writer.close();
+							writer2.close();
 						} catch (Throwable err) {
 							Logger.logErrFull(err);
 						}
@@ -359,25 +455,36 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 						try {
 							File file1 = new File(dir + "\\saves\\.demo_save\\save.data");
 							File file2 = new File(dir + "\\saves\\.demo_save\\players\\player1.data");
+							File file3 = new File(dir + "\\saves\\.demo_save\\terrain.data");
 							FileInputStream input = new FileInputStream(file1);
 							FileInputStream input2 = new FileInputStream(file2);
+							FileInputStream input3 = new FileInputStream(file3);
 							StringBuilder builder = new StringBuilder();
 							StringBuilder builder2 = new StringBuilder();
+							StringBuilder builder3 = new StringBuilder();
 							byte[] bytes = new byte[input.available()];
 							byte[] bytes2 = new byte[input2.available()];
+							byte[] bytes3 = new byte[input3.available()];
 							input.read(bytes);
 							input2.read(bytes2);
+							input3.read(bytes3);
 							for (byte b : bytes) {
 								builder.append((char) b);
 							}
 							for (byte b : bytes2) {
 								builder2.append((char) b);
 							}
+							for (byte b : bytes3) {
+								builder3.append((char) b);
+							}
 							input.close();
 							input2.close();
+							input3.close();
 							String saveData = Compression.decompress(Compression.makeLegible(builder.toString()));
 							String playerData = Compression.decompress(Compression.makeLegible(builder2.toString()));
+							String terrainData = (Compression.makeLegible(builder3.toString()));
 //							System.out.println(saveData);
+//							System.out.println(terrainData);
 							for (String s : saveData.split("\n")) {
 								String[] strings = s.split(",");
 								try {
@@ -388,6 +495,13 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 											Integer.parseInt(strings[3].replace(",", ""))
 									);
 									world.setBlock(pos, block);
+								} catch (Throwable err) {
+									Logger.logErrFull(err);
+								}
+							}
+							for (String s : terrainData.split("\n")) {
+								try {
+									terrain.add(TerrainTriangle.fromString(s));
 								} catch (Throwable err) {
 									Logger.logErrFull(err);
 								}
@@ -429,6 +543,7 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 	@Override
 	public void render() {
 		try {
+			playerLight.setPosition(player.pos);
 			camera.position.set(player.pos.x, player.pos.y, player.pos.z);
 			camera.direction.set(0, -90, -1);
 			camera.up.set(0, -90, 0);
@@ -451,7 +566,7 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 						meshDatas.remove(chunkPos);
 					}
 					if (chunkModels.containsKey(chunkPos)) {
-						batch.render(chunkModels.get(chunkPos));
+						batch.render(chunkModels.get(chunkPos), environment);
 					} else {
 						if (meshDatas.containsKey(chunkPos)) {
 							chunkModels.put(chunkPos, new ModelInstance(chunk.bake(meshDatas.get(chunkPos))));
@@ -464,6 +579,9 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 					}
 				});
 				world.needsRefresh.clear();
+				
+				terrain.forEach(tri -> tri.draw(batch));
+				
 				Vector3 pos = new Vector3(player.pos.x / 2, player.pos.y / 2, player.pos.z / 2);
 				pos = pos.add(player.pos.x <= 0 ? -0.5f : 0.5f, 0.5f, player.pos.z <= 0 ? -0.5f : 0.5f);
 				for (float i = 0; i < 16; i += 0.01f) {
@@ -484,16 +602,16 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 										pos2.y * 2,
 										pos2.z * 2
 								);
-								batch.render(boundingBox);
+								batch.render(boundingBox, environment);
 								boundingBox.transform.scale(undoScale, undoScale, undoScale);
 								if (leftDown) {
 									for (float be = 0; be <= 2; be += 0.1f) {
-										Vector3 posPlusX = new Vector3(pos.x+be,pos.y,pos.z);
-										Vector3 posMinusX = new Vector3(pos.x-be,pos.y,pos.z);
-										Vector3 posPlusY = new Vector3(pos.x,pos.y+be,pos.z);
-										Vector3 posMinusY = new Vector3(pos.x,pos.y-be,pos.z);
-										Vector3 posPlusZ = new Vector3(pos.x,pos.y,pos.z+be);
-										Vector3 posMinusZ = new Vector3(pos.x,pos.y,pos.z-be);
+										Vector3 posPlusX = new Vector3(pos.x + be, pos.y, pos.z);
+										Vector3 posMinusX = new Vector3(pos.x - be, pos.y, pos.z);
+										Vector3 posPlusY = new Vector3(pos.x, pos.y + be, pos.z);
+										Vector3 posMinusY = new Vector3(pos.x, pos.y - be, pos.z);
+										Vector3 posPlusZ = new Vector3(pos.x, pos.y, pos.z + be);
+										Vector3 posMinusZ = new Vector3(pos.x, pos.y, pos.z - be);
 										Block block1 = world.getBlock(new BlockPos(posPlusX));
 										if (block1==null) {
 											world.setBlock(new BlockPos(posPlusX), place);

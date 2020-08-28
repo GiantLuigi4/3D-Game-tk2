@@ -110,6 +110,16 @@ public class Main {
 			});
 		} catch (Throwable ignored) {
 		}
+		getInstance().terrain.forEach(tri -> {
+			if (tri.collides(player.pos)) {
+				float newY = Math.max(player.pos.y, tri.getCollisionPosY(player.pos));
+				if (newY > player.pos.y) {
+					player.velocity.y = Math.max(player.velocity.y, 0);
+					player.pos.y = newY;
+					player.onGround = true;
+				}
+			}
+		});
 		if (keys.contains(Input.Keys.SPACE)) {
 			if (player.onGround) {
 				player.velocity.lerp(new Vector3(player.velocity.x, 2.0f, player.velocity.z), 0.1f);
