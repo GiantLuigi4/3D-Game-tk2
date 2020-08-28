@@ -32,10 +32,11 @@ import com.tfc.model.Triangle;
 import com.tfc.registry.Blocks;
 import com.tfc.registry.Textures;
 import com.tfc.utils.*;
-import com.tfc.world.Chunk;
-import com.tfc.world.ChunkPos;
 import com.tfc.world.TerrainTriangle;
 import com.tfc.world.World;
+import com.tfc.world.chunks.Chunk;
+import com.tfc.world.chunks.ChunkPos;
+import com.tfc.world.chunks.TerrainChunk;
 import net.rgsw.ptg.noise.perlin.Perlin2D;
 
 import java.io.File;
@@ -46,6 +47,8 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements InputProcessor {
 	public SpriteBatch batch2d;
@@ -92,20 +95,19 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 	boolean rightDown = false;
 	
 	private boolean ingame = false;
-	private final Thread logic = new Thread(new Runnable() {
-		@Override
-		public void run() {
-			while (running.get()) {
-				if (ingame) {
+	private static final PointLight playerLight = new PointLight();
+	private final Thread logic = new Thread(() -> {
+		while (running.get()) {
+			if (ingame) {
+				try {
 					Main.tick(keys);
+				} catch (Throwable err) {
+					Logger.logErrFull(err);
 				}
 			}
 		}
 	});
-	
 	private ModelInstance boundingBox = null;
-	
-	private static PointLight playerLight = new PointLight();
 	
 	@Override
 	public void dispose() {
@@ -114,8 +116,8 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 		Textures.close();
 		running.set(false);
 		
-		try {
-			if (ingame) {
+		if (ingame) {
+			try {
 				File player = new File(dir + "\\saves\\.demo_save\\players\\player1.data");
 				player.getParentFile().mkdirs();
 				player.createNewFile();
@@ -130,39 +132,61 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 				}
 				writer.write(bytes);
 				writer.close();
+			} catch (Throwable err) {
+				Logger.logErrFull(err);
 			}
 			
-			StringBuilder builder = new StringBuilder();
-			for (Chunk chunk : world.chunks.values()) {
-				for (BiObject<Block, BlockPos> block : chunk.getBlocks()) {
-					if (block != null && block.getObj1() != null) {
-						builder
-								.append(block.getObj1().getName())
-								.append(',').append(block.getObj2().x)
-								.append(',').append(block.getObj2().y)
-								.append(',').append(block.getObj2().z)
-								.append('\n')
-						;
-					}
+			try {
+				//https://www.codejava.net/java-se/file-io/how-to-compress-files-in-zip-format-in-java#:~:text=Here%20are%20the%20steps%20to,ZipEntry)%20method%20on%20the%20ZipOutputStream.
+				File zfile = new File(dir + "\\saves\\.demo_save\\chunks.zip");
+				if (!zfile.exists()) {
+					zfile.createNewFile();
 				}
+				FileOutputStream stream = new FileOutputStream(zfile);
+				ZipOutputStream fileSave = new ZipOutputStream(stream);
+				for (Chunk chunk : world.chunks.values()) {
+					String pos = chunk.pos.chunkX + "," + chunk.pos.chunkY + "," + chunk.pos.chunkZ;
+					fileSave.putNextEntry(new ZipEntry(pos + ".data"));
+					char[] chars = Compression.deQuadruple(Compression.makeIllegible(Compression.compress(chunk.toString()))).toCharArray();
+					byte[] bytes = new byte[chars.length];
+					for (int i = 0; i < chars.length; i++) {
+						bytes[i] = (byte) chars[i];
+					}
+					fileSave.write(bytes);
+					fileSave.closeEntry();
+				}
+				fileSave.close();
+			} catch (Throwable err) {
+				Logger.logErrFull(err);
 			}
-			String save = Compression.makeIllegible(Compression.compress(builder.toString()));
-//			System.out.println(save);
-			File saveF = new File(dir + "\\saves\\.demo_save\\save.data");
-			FileOutputStream writer = new FileOutputStream(saveF);
-			byte[] bytes = new byte[save.length()];
-			char[] chars = save.toCharArray();
-			for (int i = 0; i < save.length(); i++) {
-				bytes[i] = (byte) chars[i];
+			
+			try {
+				//https://www.codejava.net/java-se/file-io/how-to-compress-files-in-zip-format-in-java#:~:text=Here%20are%20the%20steps%20to,ZipEntry)%20method%20on%20the%20ZipOutputStream.
+				File zfile = new File(dir + "\\saves\\.demo_save\\terrain.zip");
+				if (!zfile.exists()) {
+					zfile.createNewFile();
+				}
+				FileOutputStream stream = new FileOutputStream(zfile);
+				ZipOutputStream fileSave = new ZipOutputStream(stream);
+				for (TerrainChunk chunk : world.terrainChunks.values()) {
+					String pos = chunk.pos.chunkX + "," + chunk.pos.chunkY + "," + chunk.pos.chunkZ;
+					fileSave.putNextEntry(new ZipEntry(pos + ".data"));
+					char[] chars = Compression.deQuadruple(Compression.makeIllegible(Compression.compress(chunk.toString()))).toCharArray();
+					byte[] bytes = new byte[chars.length];
+					for (int i = 0; i < chars.length; i++) {
+						bytes[i] = (byte) chars[i];
+					}
+					fileSave.write(bytes);
+					fileSave.closeEntry();
+				}
+				fileSave.close();
+			} catch (Throwable err) {
+				Logger.logErrFull(err);
 			}
-			writer.write(bytes);
-			writer.close();
-		} catch (Throwable err) {
-			Logger.logErrFull(err);
 		}
 		
 		try {
-			File log = new File(dir + "\\logs\\" + "game " + new SimpleDateFormat("yyyy-MM-dd. hh:mm:ss").format(new Date()).replace(":","'") + ".log");
+			File log = new File(dir + "\\logs\\" + "game " + new SimpleDateFormat("yyyy-MM-dd. hh:mm:ss").format(new Date()).replace(":", "'") + ".log");
 			log.getParentFile().mkdirs();
 			log.createNewFile();
 			FileWriter writer = new FileWriter(log);
@@ -177,7 +201,6 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 	public double camRotX = 0;
 	public double camRotY = 45;
 	public double camRotZ = 0;
-	public final ArrayList<TerrainTriangle> terrain = new ArrayList<>();
 	
 	@Override
 	public boolean keyDown(int keycode) {
@@ -235,17 +258,15 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 				vert.createNewFile();
 				FileWriter writer = new FileWriter(vert);
 				//TODO: learn glsl
-				//https://gamedev.stackexchange.com/questions/117052/libgdx-efficient-colored-rectangle-rendering
-				writer.write("attribute vec4 a_position;\nattribute vec4 a_color;\nvarying vec4 v_color;\n\nvoid main() {\n   v_color = a_color;\n   gl_Position =  a_position;\n}");
+				writer.write("gdx");
 				writer.close();
 			}
 			if (!frag.exists()) {
 				frag.getParentFile().mkdirs();
 				frag.createNewFile();
 				FileWriter writer = new FileWriter(frag);
-				//https://gamedev.stackexchange.com/questions/117052/libgdx-efficient-colored-rectangle-rendering
 				//TODO: learn glsl
-				writer.write("#ifdef GL_ES\nprecision mediump float;\n#endif\nvarying vec4 v_color;\n\nvoid main() {\n  gl_FragColor = v_color;\n}");
+				writer.write("gdx");
 				writer.close();
 			}
 			
@@ -284,8 +305,11 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 			camera.far = 3000f;
 			
 			batch2d = new SpriteBatch();
-//			batch = new ModelBatch(vertText.toString(), fragText.toString());
-			batch = new ModelBatch();
+			if (vertText.toString().equals("gdx") && fragText.toString().equals("gdx")) {
+				batch = new ModelBatch();
+			} else {
+				batch = new ModelBatch(vertText.toString(), fragText.toString());
+			}
 			stack = new TransformStack(batch2d);
 			
 			registryEvent.post();
@@ -337,194 +361,9 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 					
 					File file = new File(dir + "\\saves\\.demo_save");
 					if (!file.exists()) {
-						try {
-							file.mkdirs();
-							int size = 64;
-							Perlin2D noise = new Perlin2D(new Random().nextInt(), 30, 30);
-							for (int x = -size; x <= size; x++) {
-								for (int z = -size; z <= size; z++) {
-									float scale = 1f;
-									float yPosTerrain1 = ((float) (noise.generate(x / scale, z / scale) * 32) + 16);
-									float yPosTerrain2 = ((float) (noise.generate((x + 1) / scale, z / scale) * 32) + 16);
-									float yPosTerrain3 = ((float) (noise.generate((x + 1) / scale, (z + 1) / scale) * 32) + 16);
-									float yPosTerrain4 = ((float) (noise.generate(x / scale, (z + 1) / scale) * 32) + 16);
-									float x0z0 = yPosTerrain1;
-									float x1z0 = yPosTerrain2;
-									float x1z1 = yPosTerrain3;
-									float x0z1 = yPosTerrain4;
-									terrain.add(new TerrainTriangle(
-											new Vector3((x + 1) * 2, x1z1, (z + 1) * 2),
-											new Vector3((x + 1) * 2, x1z0, z * 2),
-											new Vector3(x * 2, x0z0, z * 2),
-											new Location(namespace + ":sand")
-									));
-									terrain.add(new TerrainTriangle(
-											new Vector3((x) * 2, x0z0, z * 2),
-											new Vector3((x) * 2, x0z1, (z + 1) * 2),
-											new Vector3((x + 1) * 2, x1z1, (z + 1) * 2),
-											new Location(namespace + ":green_sand")
-									));
-//									int y = yPos;
-									
-									
-									int yPos = Math.abs(z) == (size - 2) ? 2 : Math.abs(x) == (size - 2) ? 2 : 0;
-									for (int y = 0; y <= yPos; y++) {
-										if (new Random().nextDouble() >= 0.75) {
-											world.setBlock(new BlockPos(x, y, z), Blocks.get(new Location(namespace + ":sand")));
-										} else if (new Random().nextDouble() >= 0.75) {
-											world.setBlock(new BlockPos(x, y, z), Blocks.get(new Location(namespace + ":stone")));
-										} else if (new Random().nextDouble() >= 0.75) {
-											world.setBlock(new BlockPos(x, y, z), Blocks.get(new Location(namespace + ":green_sand")));
-										} else {
-											world.setBlock(new BlockPos(x, y, z), Blocks.get(new Location(namespace + ":sand_stone")));
-										}
-									}
-								}
-							}
-						} catch (Throwable err) {
-							Logger.logErrFull(err);
-						}
-						
-						
-						StringBuilder saveDataBuilder = new StringBuilder();
-						world.chunks.forEach((chunkPos, chunk) -> {
-							for (BiObject<Block, BlockPos> block : chunk.getBlocks()) {
-								if (block != null) {
-									saveDataBuilder
-											.append(block.getObj1().getName().toString())
-											.append(',').append(block.getObj2().x)
-											.append(',').append(block.getObj2().y)
-											.append(',').append(block.getObj2().z)
-											.append('\n');
-								}
-							}
-						});
-						
-						StringBuilder terrainS = new StringBuilder();
-						for (TerrainTriangle tri : terrain) {
-							terrainS.append(tri.toString()).append("\n");
-						}
-						
-						String saveData = saveDataBuilder.toString();
-//						System.out.println(Compression.makeIllegible(Compression.compress(saveData)));
-//						System.out.println(Compression.makeLegible(Compression.makeIllegible(Compression.compress(saveData))));
-						File file1 = new File(dir + "\\saves\\.demo_save\\save.data");
-						File fileT = new File(dir + "\\saves\\.demo_save\\terrain.data");
-						
-						try {
-							file1.createNewFile();
-							fileT.createNewFile();
-							FileOutputStream writer = new FileOutputStream(file1);
-							FileOutputStream writer2 = new FileOutputStream(fileT);
-							String text = Compression.makeIllegible(Compression.compress(saveData));
-							String text2 = Compression.makeIllegible((terrainS.toString()));
-							char[] chars = text.toCharArray();
-							char[] chars2 = text2.toCharArray();
-							byte[] bytes = new byte[chars.length];
-							byte[] bytes2 = new byte[chars2.length];
-							for (int i = 0; i < chars.length; i++) {
-								bytes[i] = (byte) chars[i];
-							}
-							for (int i = 0; i < chars2.length; i++) {
-								bytes2[i] = (byte) chars2[i];
-							}
-							writer.write(bytes);
-							writer2.write(bytes2);
-							writer.close();
-							writer2.close();
-						} catch (Throwable err) {
-							Logger.logErrFull(err);
-						}
-						try {
-							File player = new File(dir + "\\saves\\.demo_save\\players\\player1.data");
-							player.getParentFile().mkdirs();
-							player.createNewFile();
-							FileOutputStream writer = new FileOutputStream(player);
-							String text = Compression.makeIllegible(Compression.compress("pos:0,128,0"));
-							char[] chars = text.toCharArray();
-							byte[] bytes = new byte[chars.length];
-							for (int i = 0; i < chars.length; i++) {
-								bytes[i] = (byte) chars[i];
-							}
-							writer.write(bytes);
-							writer.close();
-						} catch (Throwable err) {
-							Logger.logErrFull(err);
-						}
+						createWorld(file);
 					} else {
-						try {
-							File file1 = new File(dir + "\\saves\\.demo_save\\save.data");
-							File file2 = new File(dir + "\\saves\\.demo_save\\players\\player1.data");
-							File file3 = new File(dir + "\\saves\\.demo_save\\terrain.data");
-							FileInputStream input = new FileInputStream(file1);
-							FileInputStream input2 = new FileInputStream(file2);
-							FileInputStream input3 = new FileInputStream(file3);
-							StringBuilder builder = new StringBuilder();
-							StringBuilder builder2 = new StringBuilder();
-							StringBuilder builder3 = new StringBuilder();
-							byte[] bytes = new byte[input.available()];
-							byte[] bytes2 = new byte[input2.available()];
-							byte[] bytes3 = new byte[input3.available()];
-							input.read(bytes);
-							input2.read(bytes2);
-							input3.read(bytes3);
-							for (byte b : bytes) {
-								builder.append((char) b);
-							}
-							for (byte b : bytes2) {
-								builder2.append((char) b);
-							}
-							for (byte b : bytes3) {
-								builder3.append((char) b);
-							}
-							input.close();
-							input2.close();
-							input3.close();
-							String saveData = Compression.decompress(Compression.makeLegible(builder.toString()));
-							String playerData = Compression.decompress(Compression.makeLegible(builder2.toString()));
-							String terrainData = (Compression.makeLegible(builder3.toString()));
-//							System.out.println(saveData);
-//							System.out.println(terrainData);
-							for (String s : saveData.split("\n")) {
-								String[] strings = s.split(",");
-								try {
-									Block block = Blocks.get(new Location(strings[0].replace(",", "")));
-									BlockPos pos = new BlockPos(
-											Integer.parseInt(strings[1].replace(",", "")),
-											Integer.parseInt(strings[2].replace(",", "")),
-											Integer.parseInt(strings[3].replace(",", ""))
-									);
-									world.setBlock(pos, block);
-								} catch (Throwable err) {
-									Logger.logErrFull(err);
-								}
-							}
-							for (String s : terrainData.split("\n")) {
-								try {
-									terrain.add(TerrainTriangle.fromString(s));
-								} catch (Throwable err) {
-									Logger.logErrFull(err);
-								}
-							}
-							for (String s : playerData.split("\n")) {
-								String[] strings = s.split(",");
-								try {
-									if (strings[0].startsWith("pos:")) {
-										player.pos.x = Float.parseFloat(strings[0].replace("pos:", ""));
-										player.pos.y = Float.parseFloat(strings[1]);
-										player.pos.z = Float.parseFloat(strings[2]);
-									} else if (strings[0].startsWith("rot:")) {
-										camRotX = Double.parseDouble(strings[0].replace("rot:", ""));
-										camRotY = Double.parseDouble(strings[1]);
-										camRotZ = Double.parseDouble(strings[2]);
-									}
-								} catch (Throwable err) {
-									Logger.logErrFull(err);
-								}
-							}
-						} catch (Throwable err) {
-							Logger.logErrFull(err);
-						}
+						loadWorld();
 					}
 					
 					ingame = true;
@@ -537,6 +376,147 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 					260, 220,
 					128, 64
 			);
+		}
+	}
+	
+	private void loadWorld() {
+		try {
+			File file1 = new File(dir + "\\saves\\.demo_save\\chunks.zip");
+			File file2 = new File(dir + "\\saves\\.demo_save\\players\\player1.data");
+//			File file3 = new File(dir + "\\saves\\.demo_save\\terrain.data");
+			File file3 = new File(dir + "\\saves\\.demo_save\\terrain.zip");
+			FileInputStream input2 = new FileInputStream(file2);
+//			FileInputStream input3 = new FileInputStream(file3);
+			StringBuilder builder2 = new StringBuilder();
+//			StringBuilder builder3 = new StringBuilder();
+			byte[] bytes2 = new byte[input2.available()];
+//			byte[] bytes3 = new byte[input3.available()];
+			input2.read(bytes2);
+//			input3.read(bytes3);
+			for (byte b : bytes2) {
+				builder2.append((char) b);
+			}
+//			for (byte b : bytes3) {
+//				builder3.append((char) b);
+//			}
+			input2.close();
+//			input3.close();
+			world.loadAll(file1);
+			String playerData = Compression.decompress(Compression.makeLegible(builder2.toString()));
+//			String terrainData = (Compression.makeLegible(builder3.toString()));
+//			for (String s : terrainData.split("\n")) {
+//				try {
+//					terrain.add(TerrainTriangle.fromString(s));
+//				} catch (Throwable err) {
+//					Logger.logErrFull(err);
+//				}
+//			}
+			for (String s : playerData.split("\n")) {
+				String[] strings = s.split(",");
+				try {
+					if (strings[0].startsWith("pos:")) {
+						player.pos.x = Float.parseFloat(strings[0].replace("pos:", ""));
+						player.pos.y = Float.parseFloat(strings[1]);
+						player.pos.z = Float.parseFloat(strings[2]);
+					} else if (strings[0].startsWith("rot:")) {
+						camRotX = Double.parseDouble(strings[0].replace("rot:", ""));
+						camRotY = Double.parseDouble(strings[1]);
+						camRotZ = Double.parseDouble(strings[2]);
+					}
+				} catch (Throwable err) {
+					Logger.logErrFull(err);
+				}
+			}
+			world.loadTerrainChunks(file3);
+		} catch (Throwable err) {
+			Logger.logErrFull(err);
+		}
+	}
+	
+	private void createWorld(File file) {
+		try {
+			file.mkdirs();
+			int size = 16;
+			Perlin2D noise = new Perlin2D(new Random().nextInt(), 30, 30);
+			for (int x = -size; x <= size; x++) {
+				for (int z = -size; z <= size; z++) {
+					float scale = 1f;
+					float yPosTerrain1 = ((float) (noise.generate(x / scale, z / scale) * 32) + 16);
+					float yPosTerrain2 = ((float) (noise.generate((x + 1) / scale, z / scale) * 32) + 16);
+					float yPosTerrain3 = ((float) (noise.generate((x + 1) / scale, (z + 1) / scale) * 32) + 16);
+					float yPosTerrain4 = ((float) (noise.generate(x / scale, (z + 1) / scale) * 32) + 16);
+					float x0z0 = yPosTerrain1;
+					float x1z0 = yPosTerrain2;
+					float x1z1 = yPosTerrain3;
+					float x0z1 = yPosTerrain4;
+					world.addTerrainTriangle(new TerrainTriangle(
+							new Vector3((x + 1) * 2, x1z1, (z + 1) * 2),
+							new Vector3((x + 1) * 2, x1z0, z * 2),
+							new Vector3(x * 2, x0z0, z * 2),
+							new Location(namespace + ":sand")
+					));
+					world.addTerrainTriangle(new TerrainTriangle(
+							new Vector3((x) * 2, x0z0, z * 2),
+							new Vector3((x) * 2, x0z1, (z + 1) * 2),
+							new Vector3((x + 1) * 2, x1z1, (z + 1) * 2),
+							new Location(namespace + ":green_sand")
+					));
+					
+					
+					int yPos = Math.abs(z) == (size - 2) ? 2 : Math.abs(x) == (size - 2) ? 2 : 0;
+					for (int y = 0; y <= yPos; y++) {
+						if (new Random().nextDouble() >= 0.75) {
+							world.setBlock(new BlockPos(x, y, z), Blocks.get(new Location(namespace + ":sand")));
+						} else if (new Random().nextDouble() >= 0.75) {
+							world.setBlock(new BlockPos(x, y, z), Blocks.get(new Location(namespace + ":stone")));
+						} else if (new Random().nextDouble() >= 0.75) {
+							world.setBlock(new BlockPos(x, y, z), Blocks.get(new Location(namespace + ":green_sand")));
+						} else {
+							world.setBlock(new BlockPos(x, y, z), Blocks.get(new Location(namespace + ":sand_stone")));
+						}
+					}
+				}
+			}
+		} catch (Throwable err) {
+			Logger.logErrFull(err);
+		}
+
+//		StringBuilder terrainS = new StringBuilder();
+//		for (TerrainTriangle tri : terrain) {
+//			terrainS.append(tri.toString()).append("\n");
+//		}
+//
+//		File fileT = new File(dir + "\\saves\\.demo_save\\terrain.data");
+
+//		try {
+//			fileT.createNewFile();
+//			FileOutputStream writer2 = new FileOutputStream(fileT);
+//			String text2 = Compression.makeIllegible((terrainS.toString()));
+//			char[] chars2 = text2.toCharArray();
+//			byte[] bytes2 = new byte[chars2.length];
+//			for (int i = 0; i < chars2.length; i++) {
+//				bytes2[i] = (byte) chars2[i];
+//			}
+//			writer2.write(bytes2);
+//			writer2.close();
+//		} catch (Throwable err) {
+//			Logger.logErrFull(err);
+//		}
+		try {
+			File player = new File(dir + "\\saves\\.demo_save\\players\\player1.data");
+			player.getParentFile().mkdirs();
+			player.createNewFile();
+			FileOutputStream writer = new FileOutputStream(player);
+			String text = Compression.makeIllegible(Compression.compress("pos:0,128,0"));
+			char[] chars = text.toCharArray();
+			byte[] bytes = new byte[chars.length];
+			for (int i = 0; i < chars.length; i++) {
+				bytes[i] = (byte) chars[i];
+			}
+			writer.write(bytes);
+			writer.close();
+		} catch (Throwable err) {
+			Logger.logErrFull(err);
 		}
 	}
 	
@@ -580,7 +560,7 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 				});
 				world.needsRefresh.clear();
 				
-				terrain.forEach(tri -> tri.draw(batch));
+				world.terrainChunks.forEach((pos, chunk) -> chunk.forEach(triangle -> triangle.draw(batch)));
 				
 				Vector3 pos = new Vector3(player.pos.x / 2, player.pos.y / 2, player.pos.z / 2);
 				pos = pos.add(player.pos.x <= 0 ? -0.5f : 0.5f, 0.5f, player.pos.z <= 0 ? -0.5f : 0.5f);

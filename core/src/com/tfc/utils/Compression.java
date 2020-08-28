@@ -23,7 +23,8 @@ public class Compression {
 			{"-6", "{"},
 			{"-4", "}"},
 			{"vel:", "\\"},
-			{"rot:", "~"}
+			{"rot:", "~"},
+			{":debug_one", "²"},
 	};
 	
 	public static String compress(String text) {
@@ -72,5 +73,36 @@ public class Compression {
 //		}
 //		return out.toString();
 		return text;
+	}
+	
+	public static String deQuadruple(String text) {
+		String text1 = text;
+		char[] chars = text1.toCharArray();
+		String char4 = "";
+		for (char c : chars) {
+			if (char4.length() >= 1) {
+				if (c == char4.charAt(0)) {
+					char4 = char4 + c;
+				}
+				if (char4.length() == 4) {
+					text1 = text1.replace(char4, c + "§");
+				}
+			} else {
+				char4 = "" + c;
+			}
+		}
+		return text1;
+	}
+	
+	public static String reQuadruple(String text) {
+		String text1 = text;
+		while (text1.contains("§")) {
+			String charAt = "" + text.charAt(text.indexOf("§") - 1);
+			text1 = text1.replace(
+					charAt + "§",
+					charAt + charAt + charAt + charAt
+			);
+		}
+		return text1;
 	}
 }

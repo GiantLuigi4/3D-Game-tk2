@@ -1,4 +1,4 @@
-package com.tfc.world;
+package com.tfc.world.chunks;
 
 import com.tfc.blocks.BlockPos;
 

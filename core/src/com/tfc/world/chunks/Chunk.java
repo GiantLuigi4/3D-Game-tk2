@@ -1,4 +1,4 @@
-package com.tfc.world;
+package com.tfc.world.chunks;
 
 import com.badlogic.gdx.graphics.Mesh;
 import com.badlogic.gdx.graphics.g3d.Material;
@@ -12,6 +12,7 @@ import com.tfc.blocks.Block;
 import com.tfc.blocks.BlockPos;
 import com.tfc.model.Cube;
 import com.tfc.utils.BiObject;
+import com.tfc.world.World;
 
 import java.util.HashMap;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -47,6 +48,22 @@ public class Chunk {
 		} else {
 			return null;
 		}
+	}
+	
+	public String toString() {
+		StringBuilder builder = new StringBuilder();
+		for (BiObject<Block, BlockPos> block : this.getBlocks()) {
+			if (block != null && block.getObj1() != null) {
+				builder
+						.append(block.getObj1().getName())
+						.append(',').append(block.getObj2().x)
+						.append(',').append(block.getObj2().y)
+						.append(',').append(block.getObj2().z)
+						.append('\n')
+				;
+			}
+		}
+		return builder.toString();
 	}
 	
 	private int getIndexFromPos(BlockPos pos) {

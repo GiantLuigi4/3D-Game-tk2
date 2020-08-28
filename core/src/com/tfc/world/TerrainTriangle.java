@@ -98,7 +98,7 @@ public class TerrainTriangle {
 	
 	public float getCollisionPosY(Vector3 pos) {
 		ArrayList<Vector3> poses = new ArrayList<>();
-		float precision = 32f;
+		float precision = 16f;
 		for (int i = 0; i < precision; i++) {
 			poses.add(new Vector3(v1).lerp(new Vector3(v2), i / precision));
 			poses.add(new Vector3(v1).lerp(new Vector3(v3), i / precision));
