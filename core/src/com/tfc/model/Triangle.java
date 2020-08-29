@@ -10,6 +10,8 @@ import com.badlogic.gdx.graphics.g3d.utils.MeshPartBuilder.VertexInfo;
 import com.badlogic.gdx.graphics.g3d.utils.ModelBuilder;
 import com.badlogic.gdx.math.Vector3;
 import com.tfc.ThreeDeeFirstPersonGame;
+import com.tfc.utils.Location;
+import com.tfc.utils.MaterialMap;
 
 public class Triangle {
 	//https://stackoverflow.com/questions/18448018/3d-triangle-in-libgdx
@@ -26,8 +28,8 @@ public class Triangle {
 		return new ModelInstance(model);
 	}
 	
-	public static ModelInstance createTriangle(Vector3 vert1, Vector3 vert2, Vector3 vert3, Texture texture) {
-		Material mat = new Material(TextureAttribute.createDiffuse(texture));
+	public static ModelInstance createTriangle(Vector3 vert1, Vector3 vert2, Vector3 vert3, Location texture) {
+		Material mat = MaterialMap.getOrCreate(texture);
 		ModelBuilder builder = ThreeDeeFirstPersonGame.getInstance().modelBuilder;
 		builder.begin();
 		MeshPartBuilder builder1 = builder.part("tri", GL20.GL_TRIANGLES, Cube.defaultAttribs, mat);

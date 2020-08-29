@@ -85,11 +85,11 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 	public int seed = 0;
 	
 	private static void register(String name) {
-		Blocks.register(new Block(new Location(namespace + ":" + name), Cube.createModel(Textures.get(new Location(namespace + ":" + name)))));
+		Blocks.register(new Block(new Location(namespace + ":" + name), Cube.createModel((new Location(namespace + ":" + name)))));
 	}
 	
 	private static void registerTransparent(String name) {
-		Blocks.register(new Block(new Location(namespace + ":" + name), Cube.createTransparentModel(Textures.get(new Location(namespace + ":" + name)))));
+		Blocks.register(new Block(new Location(namespace + ":" + name), Cube.createTransparentModel((new Location(namespace + ":" + name)))));
 	}
 	
 	private final ArrayList<Integer> keys = new ArrayList<>();
@@ -98,7 +98,6 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 	boolean rightDown = false;
 	
 	private boolean ingame = false;
-	public static SpriteMap sprites = new SpriteMap();
 	
 	private final Vector3 lastPos = new Vector3();
 	
@@ -159,10 +158,10 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 				new Vector3(0, 0, 0),
 				new Vector3(0, 0, 1),
 				new Vector3(0, 1, 1),
-				Textures.get(new Location(namespace + ":stone"))
+				(new Location(namespace + ":stone"))
 		);
 		
-		boundingBox = Cube.createModel(Textures.get(new Location(namespace + ":bounding_box")));
+		boundingBox = Cube.createModel((new Location(namespace + ":bounding_box")));
 		
 		//https://stackoverflow.com/questions/19112349/libgdx-3d-texture-transparency
 		boundingBox.materials.get(0).set(new BlendingAttribute(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA));
@@ -273,7 +272,7 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 				if (i < Blocks.count()) {
 					Block block = Blocks.getByID(i);
 					int size = 36;
-					Sprite sprite = sprites.getOrCreate(block.getName());
+					Sprite sprite = SpriteMap.getOrCreate(block.getName());
 					sprite.setPosition(102 + (i * (size + 12)), 6);
 					sprite.setSize(size, size);
 					sprite.draw(event.getBatch());
@@ -473,18 +472,18 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 				for (int z = -size; z <= size; z++) {
 					world.generate(x, z, noise);
 
-//					int yPos = Math.abs(z) == (size - 2) ? 2 : Math.abs(x) == (size - 2) ? 2 : 0;
-//					for (int y = 0; y <= yPos; y++) {
-//						if (new Random().nextDouble() >= 0.75) {
-//							world.setBlock(new BlockPos(x, y, z), Blocks.get(new Location(namespace + ":sand")));
-//						} else if (new Random().nextDouble() >= 0.75) {
-//							world.setBlock(new BlockPos(x, y, z), Blocks.get(new Location(namespace + ":stone")));
-//						} else if (new Random().nextDouble() >= 0.75) {
-//							world.setBlock(new BlockPos(x, y, z), Blocks.get(new Location(namespace + ":green_sand")));
-//						} else {
-//							world.setBlock(new BlockPos(x, y, z), Blocks.get(new Location(namespace + ":sand_stone")));
-//						}
-//					}
+					int yPos = Math.abs(z) == (size - 2) ? 2 : Math.abs(x) == (size - 2) ? 2 : 0;
+					for (int y = 0; y <= yPos; y++) {
+						if (new Random().nextDouble() >= 0.75) {
+							world.setBlock(new BlockPos(x, y, z), Blocks.get(new Location(namespace + ":sand")));
+						} else if (new Random().nextDouble() >= 0.75) {
+							world.setBlock(new BlockPos(x, y, z), Blocks.get(new Location(namespace + ":stone")));
+						} else if (new Random().nextDouble() >= 0.75) {
+							world.setBlock(new BlockPos(x, y, z), Blocks.get(new Location(namespace + ":green_sand")));
+						} else {
+							world.setBlock(new BlockPos(x, y, z), Blocks.get(new Location(namespace + ":sand_stone")));
+						}
+					}
 				}
 			}
 		} catch (Throwable err) {
@@ -551,7 +550,7 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 			
 			camera.update();
 			
-			Vector3 lerped = lastPos.lerp(player.pos,Math.max(0,Math.min(1,1-(lastTick.get()/10f))));
+			Vector3 lerped = lastPos.lerp(player.pos,Math.max(0,Math.min(1,Math.abs(((new Date().getTime()-lastTick.get())/10f)))));
 			Vector3 offset = new Vector3(-lerped.x, -lerped.y, -lerped.z);
 			
 			Gdx.gl.glClearColor(0, 1f, 1f, 1);
@@ -575,6 +574,7 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 							ModelInstance instance = new ModelInstance(chunk.bake(chunk.createMesh()));
 							batch.render(instance);
 							chunkModels.put(chunkPos, instance);
+							chunkModels.get(chunkPos).transform.setTranslation(offset);
 							batch.render(chunkModels.get(chunkPos), environmentSurface);
 							bakedInFrame.getAndAdd(1);
 						}
@@ -593,89 +593,7 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 					batch.render(instance, environmentSurface);
 				});
 				
-				Vector3 pos = new Vector3(player.pos.x / 2, player.pos.y / 2, player.pos.z / 2);
-				pos = pos.add(player.pos.x <= 0 ? -0.5f : 0.5f, 0.5f, player.pos.z <= 0 ? -0.5f : 0.5f);
-				for (float i = 0; i < 16; i += 0.01f) {
-					pos = pos.add(camera.direction.nor().scl(0.01f));
-					BlockPos pos2 = new BlockPos(pos);
-					if (world.hasChunk(pos2)) {
-						Block block = world.getBlock(pos2);
-						if (block != null) {
-							if (slot < Blocks.count()) {
-								Vector3 posLoc = new Vector3(pos2.x, pos2.y, pos2.z);
-								pos = posLoc.add(pos.sub(posLoc)).sub(camera.direction.nor());
-								Block place = Blocks.getByID(slot);
-								float scale = 1;
-								float undoScale = 1 / scale;
-								boundingBox.transform.scale(scale, scale, scale);
-								boundingBox.transform.setTranslation(
-										pos2.x * 2,
-										pos2.y * 2,
-										pos2.z * 2
-								);
-								boundingBox.transform.translate(offset);
-								batch.render(boundingBox, environmentSurface);
-								boundingBox.transform.scale(undoScale, undoScale, undoScale);
-								if (leftDown) {
-									for (float be = 0; be <= 2; be += 0.1f) {
-										Vector3 posPlusX = new Vector3(pos.x + be, pos.y, pos.z);
-										Vector3 posMinusX = new Vector3(pos.x - be, pos.y, pos.z);
-										Vector3 posPlusY = new Vector3(pos.x, pos.y + be, pos.z);
-										Vector3 posMinusY = new Vector3(pos.x, pos.y - be, pos.z);
-										Vector3 posPlusZ = new Vector3(pos.x, pos.y, pos.z + be);
-										Vector3 posMinusZ = new Vector3(pos.x, pos.y, pos.z - be);
-										Block block1 = world.getBlock(new BlockPos(posPlusX));
-										if (block1==null) {
-											world.setBlock(new BlockPos(posPlusX), place);
-											break;
-										}
-										block1 = world.getBlock(new BlockPos(posMinusX));
-										if (block1==null) {
-											world.setBlock(new BlockPos(posMinusX), place);
-											break;
-										}
-										block1 = world.getBlock(new BlockPos(posPlusY));
-										if (block1==null) {
-											world.setBlock(new BlockPos(posPlusY), place);
-											break;
-										}
-										block1 = world.getBlock(new BlockPos(posMinusY));
-										if (block1==null) {
-											world.setBlock(new BlockPos(posMinusY), place);
-											break;
-										}
-										block1 = world.getBlock(new BlockPos(posPlusZ));
-										if (block1==null) {
-											world.setBlock(new BlockPos(posPlusZ), place);
-											break;
-										}
-										block1 = world.getBlock(new BlockPos(posMinusZ));
-										if (block1==null) {
-											world.setBlock(new BlockPos(posMinusZ), place);
-											break;
-										}
-									}
-									pos = pos.sub(camera.direction.nor());
-//								world.setBlock(new BlockPos(
-//										Math.round(pos.x / 2),
-//										Math.round(pos.y / 2),
-//										Math.round(pos.z / 2)
-//								), place);
-									leftDown = false;
-								} else if (rightDown) {
-									pos = new Vector3(pos2.x, pos2.y, pos2.z);
-									world.setBlock(new BlockPos(
-											Math.round(pos.x),
-											Math.round(pos.y),
-											Math.round(pos.z)
-									), null);
-									rightDown = false;
-								}
-							}
-							break;
-						}
-					}
-				}
+				handlePlacement(offset);
 			}
 			batch.end();
 			
@@ -686,6 +604,92 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 			Logger.logErrFull(err);
 			dispose();
 			Runtime.getRuntime().exit(-1);
+		}
+	}
+	
+	private void handlePlacement(Vector3 offset) {
+		Vector3 pos = new Vector3(player.pos.x / 2, player.pos.y / 2, player.pos.z / 2);
+		pos = pos.add(player.pos.x <= 0 ? -0.5f : 0.5f, 0.5f, player.pos.z <= 0 ? -0.5f : 0.5f);
+		for (float i = 0; i < 16; i += 0.01f) {
+			pos = pos.add(camera.direction.nor().scl(0.01f));
+			BlockPos pos2 = new BlockPos(pos);
+			if (world.hasChunk(pos2)) {
+				Block block = world.getBlock(pos2);
+				if (block != null) {
+					if (slot < Blocks.count()) {
+						Vector3 posLoc = new Vector3(pos2.x, pos2.y, pos2.z);
+						pos = posLoc.add(pos.sub(posLoc)).sub(camera.direction.nor());
+						Block place = Blocks.getByID(slot);
+						float scale = 1;
+						float undoScale = 1 / scale;
+						boundingBox.transform.scale(scale, scale, scale);
+						boundingBox.transform.setTranslation(
+								pos2.x * 2,
+								pos2.y * 2,
+								pos2.z * 2
+						);
+						boundingBox.transform.translate(offset);
+						batch.render(boundingBox, environmentSurface);
+						boundingBox.transform.scale(undoScale, undoScale, undoScale);
+						if (leftDown) {
+							for (float be = 0; be <= 2; be += 0.1f) {
+								Vector3 posPlusX = new Vector3(pos.x + be, pos.y, pos.z);
+								Vector3 posMinusX = new Vector3(pos.x - be, pos.y, pos.z);
+								Vector3 posPlusY = new Vector3(pos.x, pos.y + be, pos.z);
+								Vector3 posMinusY = new Vector3(pos.x, pos.y - be, pos.z);
+								Vector3 posPlusZ = new Vector3(pos.x, pos.y, pos.z + be);
+								Vector3 posMinusZ = new Vector3(pos.x, pos.y, pos.z - be);
+								Block block1 = world.getBlock(new BlockPos(posPlusX));
+								if (block1==null) {
+									world.setBlock(new BlockPos(posPlusX), place);
+									break;
+								}
+								block1 = world.getBlock(new BlockPos(posMinusX));
+								if (block1==null) {
+									world.setBlock(new BlockPos(posMinusX), place);
+									break;
+								}
+								block1 = world.getBlock(new BlockPos(posPlusY));
+								if (block1==null) {
+									world.setBlock(new BlockPos(posPlusY), place);
+									break;
+								}
+								block1 = world.getBlock(new BlockPos(posMinusY));
+								if (block1==null) {
+									world.setBlock(new BlockPos(posMinusY), place);
+									break;
+								}
+								block1 = world.getBlock(new BlockPos(posPlusZ));
+								if (block1==null) {
+									world.setBlock(new BlockPos(posPlusZ), place);
+									break;
+								}
+								block1 = world.getBlock(new BlockPos(posMinusZ));
+								if (block1==null) {
+									world.setBlock(new BlockPos(posMinusZ), place);
+									break;
+								}
+							}
+							pos = pos.sub(camera.direction.nor());
+//								world.setBlock(new BlockPos(
+//										Math.round(pos.x / 2),
+//										Math.round(pos.y / 2),
+//										Math.round(pos.z / 2)
+//								), place);
+							leftDown = false;
+						} else if (rightDown) {
+							pos = new Vector3(pos2.x, pos2.y, pos2.z);
+							world.setBlock(new BlockPos(
+									Math.round(pos.x),
+									Math.round(pos.y),
+									Math.round(pos.z)
+							), null);
+							rightDown = false;
+						}
+					}
+					break;
+				}
+			}
 		}
 	}
 	

@@ -9,6 +9,8 @@ import com.badlogic.gdx.graphics.g3d.ModelInstance;
 import com.badlogic.gdx.graphics.g3d.attributes.BlendingAttribute;
 import com.badlogic.gdx.graphics.g3d.attributes.TextureAttribute;
 import com.tfc.ThreeDeeFirstPersonGame;
+import com.tfc.utils.Location;
+import com.tfc.utils.MaterialMap;
 
 public class Cube {
 	public static final int defaultAttribs =
@@ -23,24 +25,24 @@ public class Cube {
 		return new ModelInstance(mdl, 0, 0, 0);
 	}
 	
-	public static ModelInstance createModel(Texture texture) {
+	public static ModelInstance createModel(Location texture) {
 		Model mdl = (
 				ThreeDeeFirstPersonGame.getInstance().modelBuilder.createBox
 						(
 								2f, 2f, 2f,
-								new Material(TextureAttribute.createDiffuse(texture)),
+								MaterialMap.getOrCreate(texture),
 								defaultAttribs
 						)
 		);
 		return new ModelInstance(mdl, 0, 0, 0);
 	}
 	
-	public static ModelInstance createTransparentModel(Texture texture) {
+	public static ModelInstance createTransparentModel(Location texture) {
 		Model mdl = (
 				ThreeDeeFirstPersonGame.getInstance().modelBuilder.createBox
 						(
 								2f, 2f, 2f,
-								new Material(TextureAttribute.createDiffuse(texture)),
+								MaterialMap.getOrCreate(texture),
 								defaultAttribs
 						)
 		);

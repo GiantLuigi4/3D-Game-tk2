@@ -30,7 +30,7 @@ public class TerrainTriangle {
 				new Vector3(v1).sub(0, 3, 0),
 				new Vector3(v2).sub(0, 3, 0),
 				new Vector3(v3).sub(0, 3, 0),
-				Textures.get(texture)
+				(texture)
 		);
 		this.texture = texture;
 	}
