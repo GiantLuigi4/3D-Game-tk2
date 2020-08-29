@@ -32,7 +32,6 @@ import com.tfc.model.Triangle;
 import com.tfc.registry.Blocks;
 import com.tfc.registry.Textures;
 import com.tfc.utils.*;
-import com.tfc.world.TerrainTriangle;
 import com.tfc.world.World;
 import com.tfc.world.chunks.Chunk;
 import com.tfc.world.chunks.ChunkPos;
@@ -74,7 +73,7 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 	public Player player = new Player();
 	public final HashMap<ChunkPos, BiObject<ModelBuilder, HashMap<BiObject<Integer, Material>, MeshBuilder>>> meshDatas = new HashMap<>();
 	
-	public static String namespace = "game";
+	public static final String namespace = "game";
 	public Sprite spritehotbar;
 	
 	public final HashMap<ChunkPos, ModelInstance> chunkModels = new HashMap<>();
@@ -111,100 +110,7 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 		}
 	});
 	private ModelInstance boundingBox = null;
-	
-	@Override
-	public void dispose() {
-		batch.dispose();
-		batch2d.dispose();
-		Textures.close();
-		running.set(false);
-		
-		if (ingame) {
-			try {
-				File player = new File(dir + "\\saves\\.demo_save\\players\\player1.data");
-				player.getParentFile().mkdirs();
-				player.createNewFile();
-				FileOutputStream writer = new FileOutputStream(player);
-				String text1 = "pos:" + this.player.pos.x + "," + this.player.pos.y + "," + this.player.pos.z + "\n";
-				text1 += "rot:" + camRotX + "," + camRotY + "," + camRotZ + "\n";
-				String text = Compression.makeIllegible(Compression.compress(text1));
-				char[] chars = text.toCharArray();
-				byte[] bytes = new byte[chars.length];
-				for (int i = 0; i < chars.length; i++) {
-					bytes[i] = (byte) chars[i];
-				}
-				writer.write(bytes);
-				writer.close();
-			} catch (Throwable err) {
-				Logger.logErrFull(err);
-			}
-			
-			try {
-				//https://www.codejava.net/java-se/file-io/how-to-compress-files-in-zip-format-in-java#:~:text=Here%20are%20the%20steps%20to,ZipEntry)%20method%20on%20the%20ZipOutputStream.
-				File zfile = new File(dir + "\\saves\\.demo_save\\chunks.zip");
-				if (!zfile.exists()) {
-					zfile.createNewFile();
-				}
-				FileOutputStream stream = new FileOutputStream(zfile);
-				ZipOutputStream fileSave = new ZipOutputStream(stream);
-				for (Chunk chunk : world.chunks.values()) {
-					String pos = chunk.pos.chunkX + "," + chunk.pos.chunkY + "," + chunk.pos.chunkZ;
-					fileSave.putNextEntry(new ZipEntry(pos + ".data"));
-					char[] chars = Compression.deQuadruple(Compression.makeIllegible(Compression.compress(chunk.toString()))).toCharArray();
-					byte[] bytes = new byte[chars.length];
-					for (int i = 0; i < chars.length; i++) {
-						bytes[i] = (byte) chars[i];
-					}
-					fileSave.write(bytes);
-					fileSave.closeEntry();
-				}
-				fileSave.close();
-			} catch (Throwable err) {
-				Logger.logErrFull(err);
-			}
-			
-			try {
-				//https://www.codejava.net/java-se/file-io/how-to-compress-files-in-zip-format-in-java#:~:text=Here%20are%20the%20steps%20to,ZipEntry)%20method%20on%20the%20ZipOutputStream.
-				File zfile = new File(dir + "\\saves\\.demo_save\\terrain.zip");
-				if (!zfile.exists()) {
-					zfile.createNewFile();
-				}
-				FileOutputStream stream = new FileOutputStream(zfile);
-				ZipOutputStream fileSave = new ZipOutputStream(stream);
-				for (TerrainChunk chunk : world.terrainChunks.values()) {
-					String pos = chunk.pos.chunkX + "," + chunk.pos.chunkY + "," + chunk.pos.chunkZ;
-					fileSave.putNextEntry(new ZipEntry(pos + ".data"));
-					char[] chars = Compression.deQuadruple(Compression.makeIllegible(Compression.compress(chunk.toString()))).toCharArray();
-					byte[] bytes = new byte[chars.length];
-					for (int i = 0; i < chars.length; i++) {
-						bytes[i] = (byte) chars[i];
-					}
-					fileSave.write(bytes);
-					fileSave.closeEntry();
-				}
-				fileSave.close();
-			} catch (Throwable err) {
-				Logger.logErrFull(err);
-			}
-			Files.createFile("saves\\.demo_save\\level.data",
-					Compression.makeIllegible(Compression.deQuadruple(Compression.compress(
-							"seed:" + seed + "\n" +
-									"time:" + dayTime + "\n"
-					)))
-			);
-		}
-		
-		try {
-			File log = new File(dir + "\\logs\\" + "game " + new SimpleDateFormat("yyyy-MM-dd. hh:mm:ss").format(new Date()).replace(":", "'") + ".log");
-			log.getParentFile().mkdirs();
-			log.createNewFile();
-			FileWriter writer = new FileWriter(log);
-			writer.write(FlameConfig.field.getText());
-			writer.close();
-		} catch (Throwable err) {
-			err.printStackTrace();
-		}
-	}
+	Perlin2D noise;
 	
 	
 	public double camRotX = 0;
@@ -396,6 +302,107 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 		}
 	}
 	
+	int scaleX = 30;
+	int scaleY = 30;
+	
+	@Override
+	public void dispose() {
+		batch.dispose();
+		batch2d.dispose();
+		Textures.close();
+		running.set(false);
+		
+		if (ingame) {
+			try {
+				File player = new File(dir + "\\saves\\.demo_save\\players\\player1.data");
+				player.getParentFile().mkdirs();
+				player.createNewFile();
+				FileOutputStream writer = new FileOutputStream(player);
+				String text1 = "pos:" + this.player.pos.x + "," + this.player.pos.y + "," + this.player.pos.z + "\n";
+				text1 += "rot:" + camRotX + "," + camRotY + "," + camRotZ + "\n";
+				String text = Compression.makeIllegible(Compression.compress(text1));
+				char[] chars = text.toCharArray();
+				byte[] bytes = new byte[chars.length];
+				for (int i = 0; i < chars.length; i++) {
+					bytes[i] = (byte) chars[i];
+				}
+				writer.write(bytes);
+				writer.close();
+			} catch (Throwable err) {
+				Logger.logErrFull(err);
+			}
+			
+			try {
+				//https://www.codejava.net/java-se/file-io/how-to-compress-files-in-zip-format-in-java#:~:text=Here%20are%20the%20steps%20to,ZipEntry)%20method%20on%20the%20ZipOutputStream.
+				File zfile = new File(dir + "\\saves\\.demo_save\\chunks.zip");
+				if (!zfile.exists()) {
+					zfile.createNewFile();
+				}
+				FileOutputStream stream = new FileOutputStream(zfile);
+				ZipOutputStream fileSave = new ZipOutputStream(stream);
+				for (Chunk chunk : world.chunks.values()) {
+					String pos = chunk.pos.chunkX + "," + chunk.pos.chunkY + "," + chunk.pos.chunkZ;
+					fileSave.putNextEntry(new ZipEntry(pos + ".data"));
+					char[] chars = Compression.deQuadruple(Compression.makeIllegible(Compression.compress(chunk.toString()))).toCharArray();
+					byte[] bytes = new byte[chars.length];
+					for (int i = 0; i < chars.length; i++) {
+						bytes[i] = (byte) chars[i];
+					}
+					fileSave.write(bytes);
+					fileSave.closeEntry();
+				}
+				fileSave.close();
+			} catch (Throwable err) {
+				Logger.logErrFull(err);
+			}
+			
+			try {
+				//https://www.codejava.net/java-se/file-io/how-to-compress-files-in-zip-format-in-java#:~:text=Here%20are%20the%20steps%20to,ZipEntry)%20method%20on%20the%20ZipOutputStream.
+				File zfile = new File(dir + "\\saves\\.demo_save\\terrain.zip");
+				if (!zfile.exists()) {
+					zfile.createNewFile();
+				}
+				FileOutputStream stream = new FileOutputStream(zfile);
+				ZipOutputStream fileSave = new ZipOutputStream(stream);
+				for (TerrainChunk chunk : world.terrainChunks.values()) {
+					String pos = chunk.pos.chunkX + "," + chunk.pos.chunkY + "," + chunk.pos.chunkZ;
+					fileSave.putNextEntry(new ZipEntry(pos + ".data"));
+					char[] chars = Compression.deQuadruple(Compression.makeIllegible(Compression.compress(chunk.toString()))).toCharArray();
+					byte[] bytes = new byte[chars.length];
+					for (int i = 0; i < chars.length; i++) {
+						bytes[i] = (byte) chars[i];
+					}
+					fileSave.write(bytes);
+					fileSave.closeEntry();
+				}
+				fileSave.close();
+			} catch (Throwable err) {
+				Logger.logErrFull(err);
+			}
+			Files.createFile("saves\\.demo_save\\level.properties",
+					Compression.makeIllegible(Compression.deQuadruple(Compression.compress(
+							"//I guess you can tamper with this (for now)" + "\n" +
+									"seed:" + seed + "\n" +
+									"scaleX:" + scaleX + "\n" +
+									"scaleY:" + scaleY + "\n" +
+									"createNoise\n" +
+									"time:" + dayTime + "\n"
+					)))
+			);
+		}
+		
+		try {
+			File log = new File(dir + "\\logs\\" + "game " + new SimpleDateFormat("yyyy-MM-dd. hh:mm:ss").format(new Date()).replace(":", "'") + ".log");
+			log.getParentFile().mkdirs();
+			log.createNewFile();
+			FileWriter writer = new FileWriter(log);
+			writer.write(FlameConfig.field.getText());
+			writer.close();
+		} catch (Throwable err) {
+			err.printStackTrace();
+		}
+	}
+	
 	private void loadWorld() {
 		try {
 			File file1 = new File(dir + "\\saves\\.demo_save\\chunks.zip");
@@ -434,6 +441,12 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 					seed = Integer.parseInt(line.replace("seed:", ""));
 				} else if (line.startsWith("time:")) {
 					dayTime = Long.parseLong(line.replace("time:", ""));
+				} else if (line.startsWith("scaleX:")) {
+					scaleX = Integer.parseInt(line.replace("scaleX:", ""));
+				} else if (line.startsWith("scaleY:")) {
+					scaleY = Integer.parseInt(line.replace("scaleY:", ""));
+				} else if (line.startsWith("createNoise")) {
+					noise = new Perlin2D(seed, scaleX, scaleY);
 				}
 			}
 		} catch (Throwable err) {
@@ -444,33 +457,14 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 	private void createWorld(File file) {
 		try {
 			file.mkdirs();
-			int size = 128;
+			int size = 16;
 			seed = new Random().nextInt();
-			Perlin2D noise = new Perlin2D((int) seed, 30, 30);
+			scaleX = new Random(seed).nextInt(16) + 16;
+			scaleY = new Random(seed * 2).nextInt(16) + 16;
+			noise = new Perlin2D(seed, scaleX, scaleY);
 			for (int x = -size; x <= size; x++) {
 				for (int z = -size; z <= size; z++) {
-					float scale = 1f;
-					float yPosTerrain1 = ((float) (noise.generate(x / scale, z / scale) * 32) + 16);
-					float yPosTerrain2 = ((float) (noise.generate((x + 1) / scale, z / scale) * 32) + 16);
-					float yPosTerrain3 = ((float) (noise.generate((x + 1) / scale, (z + 1) / scale) * 32) + 16);
-					float yPosTerrain4 = ((float) (noise.generate(x / scale, (z + 1) / scale) * 32) + 16);
-					float x0z0 = yPosTerrain1;
-					float x1z0 = yPosTerrain2;
-					float x1z1 = yPosTerrain3;
-					float x0z1 = yPosTerrain4;
-					world.addTerrainTriangle(new TerrainTriangle(
-							new Vector3((x + 1) * 2, x1z1, (z + 1) * 2),
-							new Vector3((x + 1) * 2, x1z0, z * 2),
-							new Vector3(x * 2, x0z0, z * 2),
-							new Location(namespace + ":sand")
-					));
-					world.addTerrainTriangle(new TerrainTriangle(
-							new Vector3((x) * 2, x0z0, z * 2),
-							new Vector3((x) * 2, x0z1, (z + 1) * 2),
-							new Vector3((x + 1) * 2, x1z1, (z + 1) * 2),
-							new Location(namespace + ":green_sand")
-					));
-
+					world.generate(x, z, noise);
 
 //					int yPos = Math.abs(z) == (size - 2) ? 2 : Math.abs(x) == (size - 2) ? 2 : 0;
 //					for (int y = 0; y <= yPos; y++) {

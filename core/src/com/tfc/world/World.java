@@ -1,14 +1,14 @@
 package com.tfc.world;
 
+import com.tfc.ThreeDeeFirstPersonGame;
 import com.tfc.blocks.Block;
 import com.tfc.blocks.BlockPos;
 import com.tfc.registry.Blocks;
-import com.tfc.utils.Compression;
-import com.tfc.utils.Location;
-import com.tfc.utils.Logger;
+import com.tfc.utils.*;
 import com.tfc.world.chunks.Chunk;
 import com.tfc.world.chunks.ChunkPos;
 import com.tfc.world.chunks.TerrainChunk;
+import net.rgsw.ptg.noise.Noise2D;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -173,5 +173,17 @@ public class World {
 	
 	public Block getBlock(BlockPos pos) {
 		return getChunk(pos).getBlock(pos);
+	}
+	
+	public void generate(int chunkX, int chunkZ, Noise2D noise) {
+		int genX = chunkX * (Chunk.size / 2);
+		int genZ = chunkZ * (Chunk.size / 2);
+		for (int x = 0; x < (Chunk.size / 2); x++) {
+			for (int z = 0; z < (Chunk.size / 2); z++) {
+				BiObject<TerrainTriangle, TerrainTriangle> triangles = WorldGen.getTerrainSquare(genX + x, genZ + z, noise, 1f, new Location(ThreeDeeFirstPersonGame.namespace, "grass"), new Location(ThreeDeeFirstPersonGame.namespace, "grass"));
+				this.addTerrainTriangle(triangles.getObj1());
+				this.addTerrainTriangle(triangles.getObj2());
+			}
+		}
 	}
 }
