@@ -168,5 +168,6 @@ public class Main {
 			Thread.sleep(10);
 		} catch (Throwable ignored) {
 		}
+		getInstance().dayTime++;
 	}
 }

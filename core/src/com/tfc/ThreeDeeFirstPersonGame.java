@@ -16,7 +16,6 @@ import com.badlogic.gdx.graphics.g3d.ModelInstance;
 import com.badlogic.gdx.graphics.g3d.attributes.BlendingAttribute;
 import com.badlogic.gdx.graphics.g3d.attributes.ColorAttribute;
 import com.badlogic.gdx.graphics.g3d.environment.DirectionalLight;
-import com.badlogic.gdx.graphics.g3d.environment.PointLight;
 import com.badlogic.gdx.graphics.g3d.utils.MeshBuilder;
 import com.badlogic.gdx.graphics.g3d.utils.ModelBuilder;
 import com.badlogic.gdx.math.Vector3;
@@ -64,10 +63,10 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 	
 	public PerspectiveCamera camera;
 	public Texture hotbar;
-	private static String dir = System.getProperty("user.dir");
+	public static final String dir = System.getProperty("user.dir");
 	public ModelBatch batch;
 	public TransformStack stack;
-	public Environment environment;
+	private static final DirectionalLight sunLight = new DirectionalLight();
 	public World world = new World();
 	
 	AtomicBoolean running = new AtomicBoolean(true);
@@ -79,9 +78,11 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 	public Sprite spritehotbar;
 	
 	public final HashMap<ChunkPos, ModelInstance> chunkModels = new HashMap<>();
-	private static final DirectionalLight playerLightD = new DirectionalLight();
+	public Environment environmentSurface;
 	int mx = 0;
 	int my = 0;
+	public long dayTime = 0;
+	public int seed = 0;
 	
 	private static void register(String name) {
 		Blocks.register(new Block(new Location(namespace + ":" + name), Cube.createModel(Textures.get(new Location(namespace + ":" + name)))));
@@ -97,7 +98,6 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 	boolean rightDown = false;
 	
 	private boolean ingame = false;
-	private static final PointLight playerLight = new PointLight();
 	public static SpriteMap sprites = new SpriteMap();
 	private final Thread logic = new Thread(() -> {
 		while (running.get()) {
@@ -186,6 +186,12 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 			} catch (Throwable err) {
 				Logger.logErrFull(err);
 			}
+			Files.createFile("saves\\.demo_save\\level.data",
+					Compression.makeIllegible(Compression.deQuadruple(Compression.compress(
+							"seed:" + seed + "\n" +
+									"time:" + dayTime + "\n"
+					)))
+			);
 		}
 		
 		try {
@@ -325,8 +331,8 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 			
 			hotbar = Textures.get(new Location(namespace + ":hotbar"));
 			
-			environment = new Environment();
-			environment.set(new ColorAttribute(ColorAttribute.AmbientLight, 0.1f, 0.1f, 0.1f, 1f));
+			environmentSurface = new Environment();
+			environmentSurface.set(new ColorAttribute(ColorAttribute.AmbientLight, 0.1f, 0.1f, 0.1f, 1f));
 			
 			spritehotbar = new Sprite(hotbar);
 			
@@ -394,34 +400,17 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 		try {
 			File file1 = new File(dir + "\\saves\\.demo_save\\chunks.zip");
 			File file2 = new File(dir + "\\saves\\.demo_save\\players\\player1.data");
-//			File file3 = new File(dir + "\\saves\\.demo_save\\terrain.data");
 			File file3 = new File(dir + "\\saves\\.demo_save\\terrain.zip");
 			FileInputStream input2 = new FileInputStream(file2);
-//			FileInputStream input3 = new FileInputStream(file3);
 			StringBuilder builder2 = new StringBuilder();
-//			StringBuilder builder3 = new StringBuilder();
 			byte[] bytes2 = new byte[input2.available()];
-//			byte[] bytes3 = new byte[input3.available()];
 			input2.read(bytes2);
-//			input3.read(bytes3);
 			for (byte b : bytes2) {
 				builder2.append((char) b);
 			}
-//			for (byte b : bytes3) {
-//				builder3.append((char) b);
-//			}
 			input2.close();
-//			input3.close();
 			world.loadAll(file1);
 			String playerData = Compression.decompress(Compression.makeLegible(builder2.toString()));
-//			String terrainData = (Compression.makeLegible(builder3.toString()));
-//			for (String s : terrainData.split("\n")) {
-//				try {
-//					terrain.add(TerrainTriangle.fromString(s));
-//				} catch (Throwable err) {
-//					Logger.logErrFull(err);
-//				}
-//			}
 			for (String s : playerData.split("\n")) {
 				String[] strings = s.split(",");
 				try {
@@ -439,6 +428,14 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 				}
 			}
 			world.loadTerrainChunks(file3);
+			String level = Compression.decompress(Compression.reQuadruple(Compression.makeLegible(Files.read("saves\\.demo_save\\level.data"))));
+			for (String line : level.split("\n")) {
+				if (line.startsWith("seed:")) {
+					seed = Integer.parseInt(line.replace("seed:", ""));
+				} else if (line.startsWith("time:")) {
+					dayTime = Long.parseLong(line.replace("time:", ""));
+				}
+			}
 		} catch (Throwable err) {
 			Logger.logErrFull(err);
 		}
@@ -448,7 +445,8 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 		try {
 			file.mkdirs();
 			int size = 128;
-			Perlin2D noise = new Perlin2D(new Random().nextInt(), 30, 30);
+			seed = new Random().nextInt();
+			Perlin2D noise = new Perlin2D((int) seed, 30, 30);
 			for (int x = -size; x <= size; x++) {
 				for (int z = -size; z <= size; z++) {
 					float scale = 1f;
@@ -534,18 +532,15 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 	@Override
 	public void render() {
 		try {
-//			environment.remove(playerLight);
-			environment.remove(playerLightD);
-			Vector3 camRot = new Vector3(camera.direction).nor();
-//			playerLight.setPosition(new Vector3(player.pos).add(camRot.scl(2)).add(0,1,0));
-//			playerLight.setPosition(new Vector3(0,0,0).add(camRot.scl(0)).add(0,-5,0));
-			playerLightD.setDirection(new Vector3(camRot.x, -camRot.y, camRot.z));
-//			playerLight.setIntensity(3f);
-			final float brightness = 0.25f;
-//			environment.add(playerLight.setColor(brightness,brightness,brightness,1f));
-			environment.add(playerLightD.setColor(brightness, brightness, brightness, 1f));
-
-//			camera.position.set(player.pos.x, player.pos.y, player.pos.z);
+			environmentSurface.remove(sunLight);
+			sunLight.setDirection(new Vector3(
+					(float) Math.cos(Math.toRadians((dayTime / 10f) % 360)) / 2f,
+					(float) Math.sin(Math.toRadians((dayTime / 10f) % 360)),
+					(float) Math.cos(Math.toRadians((dayTime / 10f) % 360)) / 4f
+			).nor());
+			final float brightness = 0.5f;
+			environmentSurface.add(sunLight.setColor(brightness, brightness, brightness, 1f));
+			
 			camera.direction.set(0, -90, -1);
 			camera.up.set(0, -90, 0);
 			
@@ -570,7 +565,7 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 					}
 					if (chunkModels.containsKey(chunkPos)) {
 						chunkModels.get(chunkPos).transform.setTranslation(offset);
-						batch.render(chunkModels.get(chunkPos), environment);
+						batch.render(chunkModels.get(chunkPos), environmentSurface);
 					} else {
 						if (meshDatas.containsKey(chunkPos)) {
 							chunkModels.put(chunkPos, new ModelInstance(chunk.bake(meshDatas.get(chunkPos))));
@@ -578,7 +573,7 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 							ModelInstance instance = new ModelInstance(chunk.bake(chunk.createMesh()));
 							batch.render(instance);
 							chunkModels.put(chunkPos, instance);
-							batch.render(chunkModels.get(chunkPos), environment);
+							batch.render(chunkModels.get(chunkPos), environmentSurface);
 							bakedInFrame.getAndAdd(1);
 						}
 					}
@@ -593,7 +588,7 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 					}
 					ModelInstance instance = terrainChunkModels.get(pos);
 					instance.transform.setTranslation(offset);
-					batch.render(instance);
+					batch.render(instance, environmentSurface);
 				});
 				
 				Vector3 pos = new Vector3(player.pos.x / 2, player.pos.y / 2, player.pos.z / 2);
@@ -617,7 +612,7 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 										pos2.z * 2
 								);
 								boundingBox.transform.translate(offset);
-								batch.render(boundingBox, environment);
+								batch.render(boundingBox, environmentSurface);
 								boundingBox.transform.scale(undoScale, undoScale, undoScale);
 								if (leftDown) {
 									for (float be = 0; be <= 2; be += 0.1f) {

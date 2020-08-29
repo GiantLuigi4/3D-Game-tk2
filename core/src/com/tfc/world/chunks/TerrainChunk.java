@@ -6,7 +6,6 @@ import com.badlogic.gdx.graphics.g3d.Material;
 import com.badlogic.gdx.graphics.g3d.ModelInstance;
 import com.badlogic.gdx.graphics.g3d.utils.MeshBuilder;
 import com.badlogic.gdx.graphics.g3d.utils.ModelBuilder;
-import com.badlogic.gdx.math.Matrix4;
 import com.tfc.ThreeDeeFirstPersonGame;
 import com.tfc.model.Cube;
 import com.tfc.utils.BiObject;
@@ -85,21 +84,14 @@ public class TerrainChunk {
 	
 	public ModelInstance bake() {
 		HashMap<Location, BiObject<Material, MeshBuilder>> builders = new HashMap<>();
-		Matrix4 matrix = new Matrix4();
 		for (TerrainTriangle tri : terrain) {
 			if (builders.containsKey(tri.texture)) {
 				MeshBuilder builder = builders.get(tri.texture).getObj2();
-				builder.getVertexTransform(matrix);
-				matrix.setTranslation(tri.min);
-				builder.setVertexTransform(matrix);
 				tri.renderable.model.meshes.forEach(builder::addMesh);
 			} else {
 				builders.put(tri.texture, new BiObject<>(tri.renderable.model.materials.get(0), new MeshBuilder()));
 				MeshBuilder builder = builders.get(tri.texture).getObj2();
 				builder.begin(Cube.defaultAttribs);
-				builder.getVertexTransform(matrix);
-				matrix.setTranslation(tri.min);
-				builder.setVertexTransform(matrix);
 				tri.renderable.model.meshes.forEach(builder::addMesh);
 			}
 		}

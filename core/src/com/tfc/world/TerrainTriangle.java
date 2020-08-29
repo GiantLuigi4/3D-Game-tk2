@@ -27,9 +27,9 @@ public class TerrainTriangle {
 				Math.min(v1.z, Math.min(v2.z, v3.z))
 		);
 		this.renderable = Triangle.createTriangle(
-				new Vector3(v1).sub(0, 3, 0).sub(min),
-				new Vector3(v2).sub(0, 3, 0).sub(min),
-				new Vector3(v3).sub(0, 3, 0).sub(min),
+				new Vector3(v1).sub(0, 3, 0),
+				new Vector3(v2).sub(0, 3, 0),
+				new Vector3(v3).sub(0, 3, 0),
 				Textures.get(texture)
 		);
 		this.texture = texture;
