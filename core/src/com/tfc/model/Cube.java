@@ -11,7 +11,12 @@ import com.badlogic.gdx.graphics.g3d.attributes.TextureAttribute;
 import com.tfc.ThreeDeeFirstPersonGame;
 
 public class Cube {
-	public static final int defaultAttribs = VertexAttributes.Usage.Position | VertexAttributes.Usage.Normal | VertexAttributes.Usage.TextureCoordinates;
+	public static final int defaultAttribs =
+			VertexAttributes.Usage.Position |
+					VertexAttributes.Usage.Normal |
+					VertexAttributes.Usage.TextureCoordinates |
+					VertexAttributes.Usage.BiNormal |
+					VertexAttributes.Usage.Tangent;
 	
 	public static ModelInstance createModel(int att, Texture texture) {
 		Model mdl = (ThreeDeeFirstPersonGame.getInstance().modelBuilder.createBox(2f, 2f, 2f, new Material(TextureAttribute.createDiffuse(texture)), att));

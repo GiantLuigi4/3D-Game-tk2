@@ -32,19 +32,26 @@ public class Main {
 		if (keys.contains(19)) {
 			getInstance().camRotY++;
 		}
-		if (keys.contains(51)) {
+		//Walk Forward
+		getInstance().camera.fieldOfView = 67;
+		if (keys.contains(Input.Keys.W)) {
 			int rotOffset = 0;
-			player.velocity.lerp(new Vector3((float) Math.sin(Math.toRadians(getInstance().camRotX - rotOffset)), player.velocity.y, (float) Math.cos(Math.toRadians(getInstance().camRotX - rotOffset))), 0.1f);
+			int speed = keys.contains(Input.Keys.CONTROL_LEFT) ? 3 : 1;
+			player.velocity.lerp(new Vector3((float) Math.sin(Math.toRadians(getInstance().camRotX - rotOffset)) * speed, player.velocity.y, (float) Math.cos(Math.toRadians(getInstance().camRotX - rotOffset)) * speed), 0.1f);
+			getInstance().camera.fieldOfView = keys.contains(Input.Keys.CONTROL_LEFT) ? 70 : 67;
 		}
-		if (keys.contains(47)) {
+		//Walk Backwards
+		if (keys.contains(Input.Keys.S)) {
 			int rotOffset = 180;
 			player.velocity.lerp(new Vector3((float) Math.sin(Math.toRadians(getInstance().camRotX - rotOffset)), player.velocity.y, (float) Math.cos(Math.toRadians(getInstance().camRotX - rotOffset))), 0.1f);
 		}
-		if (keys.contains(32)) {
+		//Strafe Right
+		if (keys.contains(Input.Keys.D)) {
 			int rotOffset = 90;
 			player.velocity.lerp(new Vector3((float) Math.sin(Math.toRadians(getInstance().camRotX - rotOffset)), player.velocity.y, (float) Math.cos(Math.toRadians(getInstance().camRotX - rotOffset))), 0.1f);
 		}
-		if (keys.contains(29)) {
+		//Strafe Left
+		if (keys.contains(Input.Keys.A)) {
 			int rotOffset = -90;
 			player.velocity.lerp(new Vector3((float) Math.sin(Math.toRadians(getInstance().camRotX - rotOffset)), player.velocity.y, (float) Math.cos(Math.toRadians(getInstance().camRotX - rotOffset))), 0.1f);
 		}

@@ -15,6 +15,7 @@ import com.badlogic.gdx.graphics.g3d.ModelBatch;
 import com.badlogic.gdx.graphics.g3d.ModelInstance;
 import com.badlogic.gdx.graphics.g3d.attributes.BlendingAttribute;
 import com.badlogic.gdx.graphics.g3d.attributes.ColorAttribute;
+import com.badlogic.gdx.graphics.g3d.environment.DirectionalLight;
 import com.badlogic.gdx.graphics.g3d.environment.PointLight;
 import com.badlogic.gdx.graphics.g3d.utils.MeshBuilder;
 import com.badlogic.gdx.graphics.g3d.utils.ModelBuilder;
@@ -78,6 +79,7 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 	public Sprite spritehotbar;
 	
 	public final HashMap<ChunkPos, ModelInstance> chunkModels = new HashMap<>();
+	private static final DirectionalLight playerLightD = new DirectionalLight();
 	int mx = 0;
 	int my = 0;
 	
@@ -96,6 +98,7 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 	
 	private boolean ingame = false;
 	private static final PointLight playerLight = new PointLight();
+	public static SpriteMap sprites = new SpriteMap();
 	private final Thread logic = new Thread(() -> {
 		while (running.get()) {
 			if (ingame) {
@@ -246,6 +249,8 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 		boundingBox.materials.get(0).set(new BlendingAttribute(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA));
 	}
 	
+	public final HashMap<ChunkPos, ModelInstance> terrainChunkModels = new HashMap<>();
+	
 	@Override
 	public void create() {
 		try {
@@ -308,6 +313,8 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 			if (vertText.toString().equals("gdx") && fragText.toString().equals("gdx")) {
 				batch = new ModelBatch();
 			} else {
+				System.out.println(vertText.toString());
+				System.out.println(fragText.toString());
 				batch = new ModelBatch(vertText.toString(), fragText.toString());
 			}
 			stack = new TransformStack(batch2d);
@@ -319,8 +326,7 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 			hotbar = Textures.get(new Location(namespace + ":hotbar"));
 			
 			environment = new Environment();
-			environment.set(new ColorAttribute(ColorAttribute.AmbientLight, 0.8f, 0.8f, 0.8f, 1f));
-			environment.add(playerLight);
+			environment.set(new ColorAttribute(ColorAttribute.AmbientLight, 0.1f, 0.1f, 0.1f, 1f));
 			
 			spritehotbar = new Sprite(hotbar);
 			
@@ -336,17 +342,22 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 		RenderUI event = (RenderUI) eventBase;
 		if (ingame) {
 			for (int i = 0; i < 10; i++) {
-				spritehotbar.setScale((480f / hotbar.getWidth()) * 0.1f, (480f / hotbar.getHeight()) * 0.1f);
-				if (slot == i) {
-					spritehotbar.setScale((480f / hotbar.getWidth()) * 0.11f, (480f / hotbar.getHeight()) * 0.11f);
-				}
-				spritehotbar.setPosition((i - (2.5f)) * 48, -216);
+//				spritehotbar.setScale((480f / hotbar.getWidth()) * 0.1f, (480f / hotbar.getHeight()) * 0.1f);
+//				if (slot == i) {
+//					spritehotbar.setScale((480f / hotbar.getWidth()) * 0.11f, (480f / hotbar.getHeight()) * 0.11f);
+//				}
+				float offXSelected = 1.9575f;
+				float offXNormal = 2;
+				spritehotbar.setSize(slot == i ? 52 : 48, slot == i ? 52 : 48);
+				spritehotbar.setPosition((i + (slot == i ? offXSelected : offXNormal)) * 48, (2 - (slot == i ? 4.5f : 2)));
 				spritehotbar.draw(event.getBatch());
 				if (i < Blocks.count()) {
 					Block block = Blocks.getByID(i);
-					Texture texture = Textures.get(block.getName());
 					int size = 36;
-					batch2d.draw(texture, 102 + ((size + 12) * i), 6, size, size);
+					Sprite sprite = sprites.getOrCreate(block.getName());
+					sprite.setPosition(102 + (i * (size + 12)), 6);
+					sprite.setSize(size, size);
+					sprite.draw(event.getBatch());
 				}
 			}
 		} else {
@@ -436,7 +447,7 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 	private void createWorld(File file) {
 		try {
 			file.mkdirs();
-			int size = 16;
+			int size = 128;
 			Perlin2D noise = new Perlin2D(new Random().nextInt(), 30, 30);
 			for (int x = -size; x <= size; x++) {
 				for (int z = -size; z <= size; z++) {
@@ -461,20 +472,20 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 							new Vector3((x + 1) * 2, x1z1, (z + 1) * 2),
 							new Location(namespace + ":green_sand")
 					));
-					
-					
-					int yPos = Math.abs(z) == (size - 2) ? 2 : Math.abs(x) == (size - 2) ? 2 : 0;
-					for (int y = 0; y <= yPos; y++) {
-						if (new Random().nextDouble() >= 0.75) {
-							world.setBlock(new BlockPos(x, y, z), Blocks.get(new Location(namespace + ":sand")));
-						} else if (new Random().nextDouble() >= 0.75) {
-							world.setBlock(new BlockPos(x, y, z), Blocks.get(new Location(namespace + ":stone")));
-						} else if (new Random().nextDouble() >= 0.75) {
-							world.setBlock(new BlockPos(x, y, z), Blocks.get(new Location(namespace + ":green_sand")));
-						} else {
-							world.setBlock(new BlockPos(x, y, z), Blocks.get(new Location(namespace + ":sand_stone")));
-						}
-					}
+
+
+//					int yPos = Math.abs(z) == (size - 2) ? 2 : Math.abs(x) == (size - 2) ? 2 : 0;
+//					for (int y = 0; y <= yPos; y++) {
+//						if (new Random().nextDouble() >= 0.75) {
+//							world.setBlock(new BlockPos(x, y, z), Blocks.get(new Location(namespace + ":sand")));
+//						} else if (new Random().nextDouble() >= 0.75) {
+//							world.setBlock(new BlockPos(x, y, z), Blocks.get(new Location(namespace + ":stone")));
+//						} else if (new Random().nextDouble() >= 0.75) {
+//							world.setBlock(new BlockPos(x, y, z), Blocks.get(new Location(namespace + ":green_sand")));
+//						} else {
+//							world.setBlock(new BlockPos(x, y, z), Blocks.get(new Location(namespace + ":sand_stone")));
+//						}
+//					}
 				}
 			}
 		} catch (Throwable err) {
@@ -523,8 +534,18 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 	@Override
 	public void render() {
 		try {
-			playerLight.setPosition(player.pos);
-			camera.position.set(player.pos.x, player.pos.y, player.pos.z);
+//			environment.remove(playerLight);
+			environment.remove(playerLightD);
+			Vector3 camRot = new Vector3(camera.direction).nor();
+//			playerLight.setPosition(new Vector3(player.pos).add(camRot.scl(2)).add(0,1,0));
+//			playerLight.setPosition(new Vector3(0,0,0).add(camRot.scl(0)).add(0,-5,0));
+			playerLightD.setDirection(new Vector3(camRot.x, -camRot.y, camRot.z));
+//			playerLight.setIntensity(3f);
+			final float brightness = 0.25f;
+//			environment.add(playerLight.setColor(brightness,brightness,brightness,1f));
+			environment.add(playerLightD.setColor(brightness, brightness, brightness, 1f));
+
+//			camera.position.set(player.pos.x, player.pos.y, player.pos.z);
 			camera.direction.set(0, -90, -1);
 			camera.up.set(0, -90, 0);
 			
@@ -533,6 +554,8 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 			camera.rotate((float) camRotX, 0, 1, 0);
 			
 			camera.update();
+			
+			Vector3 offset = new Vector3(-player.pos.x, -player.pos.y, -player.pos.z);
 			
 			Gdx.gl.glClearColor(0, 1f, 1f, 1);
 			Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT | GL20.GL_DEPTH_BUFFER_BIT);
@@ -546,6 +569,7 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 						meshDatas.remove(chunkPos);
 					}
 					if (chunkModels.containsKey(chunkPos)) {
+						chunkModels.get(chunkPos).transform.setTranslation(offset);
 						batch.render(chunkModels.get(chunkPos), environment);
 					} else {
 						if (meshDatas.containsKey(chunkPos)) {
@@ -554,13 +578,23 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 							ModelInstance instance = new ModelInstance(chunk.bake(chunk.createMesh()));
 							batch.render(instance);
 							chunkModels.put(chunkPos, instance);
+							batch.render(chunkModels.get(chunkPos), environment);
 							bakedInFrame.getAndAdd(1);
 						}
 					}
 				});
 				world.needsRefresh.clear();
-				
-				world.terrainChunks.forEach((pos, chunk) -> chunk.forEach(triangle -> triangle.draw(batch)));
+
+//				world.terrainChunks.forEach((pos, chunk) -> chunk.forEach(triangle -> triangle.draw(batch, environment, offset)));
+				world.terrainChunks.forEach((pos, chunk) -> {
+					if (!terrainChunkModels.containsKey(pos)) {
+						ModelInstance instance = chunk.bake();
+						terrainChunkModels.put(pos, instance);
+					}
+					ModelInstance instance = terrainChunkModels.get(pos);
+					instance.transform.setTranslation(offset);
+					batch.render(instance);
+				});
 				
 				Vector3 pos = new Vector3(player.pos.x / 2, player.pos.y / 2, player.pos.z / 2);
 				pos = pos.add(player.pos.x <= 0 ? -0.5f : 0.5f, 0.5f, player.pos.z <= 0 ? -0.5f : 0.5f);
@@ -582,6 +616,7 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 										pos2.y * 2,
 										pos2.z * 2
 								);
+								boundingBox.transform.translate(offset);
 								batch.render(boundingBox, environment);
 								boundingBox.transform.scale(undoScale, undoScale, undoScale);
 								if (leftDown) {

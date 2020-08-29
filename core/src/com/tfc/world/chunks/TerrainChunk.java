@@ -1,6 +1,17 @@
 package com.tfc.world.chunks;
 
+import com.badlogic.gdx.graphics.GL20;
+import com.badlogic.gdx.graphics.Mesh;
+import com.badlogic.gdx.graphics.g3d.Material;
+import com.badlogic.gdx.graphics.g3d.ModelInstance;
+import com.badlogic.gdx.graphics.g3d.utils.MeshBuilder;
+import com.badlogic.gdx.graphics.g3d.utils.ModelBuilder;
+import com.badlogic.gdx.math.Matrix4;
+import com.tfc.ThreeDeeFirstPersonGame;
+import com.tfc.model.Cube;
+import com.tfc.utils.BiObject;
 import com.tfc.utils.Compression;
+import com.tfc.utils.Location;
 import com.tfc.utils.Logger;
 import com.tfc.world.TerrainTriangle;
 
@@ -9,6 +20,8 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -68,6 +81,39 @@ public class TerrainChunk {
 		}
 		stream.close();
 		return loadChunkFromString(Compression.decompress(Compression.reQuadruple(Compression.makeLegible(new String(bytes)))), pos);
+	}
+	
+	public ModelInstance bake() {
+		HashMap<Location, BiObject<Material, MeshBuilder>> builders = new HashMap<>();
+		Matrix4 matrix = new Matrix4();
+		for (TerrainTriangle tri : terrain) {
+			if (builders.containsKey(tri.texture)) {
+				MeshBuilder builder = builders.get(tri.texture).getObj2();
+				builder.getVertexTransform(matrix);
+				matrix.setTranslation(tri.min);
+				builder.setVertexTransform(matrix);
+				tri.renderable.model.meshes.forEach(builder::addMesh);
+			} else {
+				builders.put(tri.texture, new BiObject<>(tri.renderable.model.materials.get(0), new MeshBuilder()));
+				MeshBuilder builder = builders.get(tri.texture).getObj2();
+				builder.begin(Cube.defaultAttribs);
+				builder.getVertexTransform(matrix);
+				matrix.setTranslation(tri.min);
+				builder.setVertexTransform(matrix);
+				tri.renderable.model.meshes.forEach(builder::addMesh);
+			}
+		}
+		ModelInstance instance = null;
+		ModelBuilder modelBuilder = ThreeDeeFirstPersonGame.getInstance().modelBuilder;
+		modelBuilder.begin();
+		AtomicInteger integer = new AtomicInteger(0);
+		builders.values().forEach(builder -> {
+			Mesh mesh = builder.getObj2().end();
+			modelBuilder.part(integer.toString(), mesh, GL20.GL_TRIANGLES, builder.getObj1());
+			integer.getAndIncrement();
+		});
+		instance = new ModelInstance(modelBuilder.end());
+		return instance;
 	}
 	
 	private static TerrainChunk loadChunkFromString(String terrainData, ChunkPos pos) {

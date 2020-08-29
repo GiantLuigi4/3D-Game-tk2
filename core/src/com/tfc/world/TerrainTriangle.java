@@ -1,5 +1,6 @@
 package com.tfc.world;
 
+import com.badlogic.gdx.graphics.g3d.Environment;
 import com.badlogic.gdx.graphics.g3d.ModelBatch;
 import com.badlogic.gdx.graphics.g3d.ModelInstance;
 import com.badlogic.gdx.math.Vector3;
@@ -12,17 +13,23 @@ import java.util.ArrayList;
 
 public class TerrainTriangle {
 	final Vector3 v1, v2, v3;
-	final ModelInstance renderable;
-	final Location texture;
+	public final ModelInstance renderable;
+	public final Location texture;
+	public final Vector3 min;
 	
 	public TerrainTriangle(Vector3 v1, Vector3 v2, Vector3 v3, Location texture) {
 		this.v1 = v1;
 		this.v2 = v2;
 		this.v3 = v3;
+		min = new Vector3(
+				Math.min(v1.x, Math.min(v2.x, v3.x)),
+				Math.min(v1.y, Math.min(v2.y, v3.y)),
+				Math.min(v1.z, Math.min(v2.z, v3.z))
+		);
 		this.renderable = Triangle.createTriangle(
-				new Vector3(v1).sub(0, 3, 0),
-				new Vector3(v2).sub(0, 3, 0),
-				new Vector3(v3).sub(0, 3, 0),
+				new Vector3(v1).sub(0, 3, 0).sub(min),
+				new Vector3(v2).sub(0, 3, 0).sub(min),
+				new Vector3(v3).sub(0, 3, 0).sub(min),
 				Textures.get(texture)
 		);
 		this.texture = texture;
@@ -80,8 +87,10 @@ public class TerrainTriangle {
 		return (v1 + ":" + v2 + ":" + v3 + ":" + texture.toString()).replace("(", "").replace(")", "");
 	}
 	
-	public void draw(ModelBatch batch) {
-		batch.render(renderable);
+	public void draw(ModelBatch batch, Environment environment, Vector3 offset) {
+		renderable.transform.setTranslation(offset);
+		renderable.transform.translate(min);
+		batch.render(renderable, environment);
 	}
 	
 	public boolean collides(Vector3 pos) {
