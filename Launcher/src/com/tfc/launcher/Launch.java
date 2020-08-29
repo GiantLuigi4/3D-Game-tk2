@@ -34,6 +34,7 @@ public class Launch {
 			ArrayList<String> strings = new ArrayList<>();
 			strings.add("https://github.com/GiantLuigi4/3D-Game-tk2/files/5133581/0.1.zip");
 			strings.add("https://github.com/GiantLuigi4/3D-Game-tk2/files/5133628/0.2.zip");
+//			strings.add("https://jitpack.io/com/github/GiantLuigi4/3D-game-tk2/core/%version%/core-%version%.jar");
 			File fi = new File(dir + "\\version_downloads.txt");
 			if (!fi.exists()) fi.createNewFile();
 			Scanner sc = new Scanner(fi);
