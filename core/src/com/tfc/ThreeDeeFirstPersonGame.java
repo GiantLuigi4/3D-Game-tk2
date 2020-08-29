@@ -46,6 +46,7 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -98,11 +99,17 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 	
 	private boolean ingame = false;
 	public static SpriteMap sprites = new SpriteMap();
+	
+	private final Vector3 lastPos = new Vector3();
+	
+	private final AtomicLong lastTick = new AtomicLong();
 	private final Thread logic = new Thread(() -> {
 		while (running.get()) {
 			if (ingame) {
 				try {
 					Main.tick(keys);
+					lastTick.set(new Date().getTime());
+					lastPos.set(player.pos);
 				} catch (Throwable err) {
 					Logger.logErrFull(err);
 				}
@@ -544,7 +551,8 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 			
 			camera.update();
 			
-			Vector3 offset = new Vector3(-player.pos.x, -player.pos.y, -player.pos.z);
+			Vector3 lerped = lastPos.lerp(player.pos,Math.max(0,Math.min(1,1-(lastTick.get()/10f))));
+			Vector3 offset = new Vector3(-lerped.x, -lerped.y, -lerped.z);
 			
 			Gdx.gl.glClearColor(0, 1f, 1f, 1);
 			Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT | GL20.GL_DEPTH_BUFFER_BIT);

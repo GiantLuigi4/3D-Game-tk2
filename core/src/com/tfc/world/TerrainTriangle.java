@@ -115,6 +115,7 @@ public class TerrainTriangle {
 		}
 		float closestDist = 9999;
 		Vector3 closestPoint = null;
+		Vector3 closestPointDisregardingXZ = null;
 		for (Vector3 point1 : poses) {
 			for (Vector3 point2 : poses) {
 				if (!point1.equals(point2)) {
@@ -122,12 +123,17 @@ public class TerrainTriangle {
 						Vector3 lerped = new Vector3(point1).lerp(new Vector3(point2), f);
 						if (lerped.y > pos.y) {
 							float dist = lerped.dst(new Vector3(pos.x, lerped.y, pos.z));
-//							if (closestPoint == null || closestPoint.y > lerped.y) {
 							if (dist < closestDist) {
-								closestPoint = lerped;
-								closestDist = dist;
+								if (
+										Math.abs(pos.x - lerped.x) <= 0.01f &&
+												Math.abs(pos.z - lerped.z) <= 0.01f
+								) {
+									closestPoint = lerped;
+									closestDist = dist;
+								} else {
+									closestPointDisregardingXZ = closestPoint;
+								}
 							}
-//							}
 						}
 					}
 				}
@@ -144,7 +150,11 @@ public class TerrainTriangle {
 //			return pos3.y;
 //		}
 		if (closestPoint == null) {
-			return pos.y - 1;
+			if (closestPointDisregardingXZ == null) {
+				return pos.y - 1;
+			} else {
+				return closestPointDisregardingXZ.y;
+			}
 		}
 		return closestPoint.y;
 	}
