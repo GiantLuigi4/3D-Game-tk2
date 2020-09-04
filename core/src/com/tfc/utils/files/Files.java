@@ -1,6 +1,7 @@
-package com.tfc.utils;
+package com.tfc.utils.files;
 
 import com.tfc.ThreeDeeFirstPersonGame;
+import com.tfc.utils.Logger;
 
 import java.io.File;
 import java.io.FileInputStream;

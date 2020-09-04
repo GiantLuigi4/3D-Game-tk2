@@ -1,4 +1,4 @@
-package com.tfc.utils;
+package com.tfc.utils.files;
 
 import com.tfc.ThreeDeeFirstPersonGame;
 

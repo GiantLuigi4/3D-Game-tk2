@@ -9,9 +9,9 @@ import com.badlogic.gdx.graphics.g3d.utils.ModelBuilder;
 import com.tfc.ThreeDeeFirstPersonGame;
 import com.tfc.model.Cube;
 import com.tfc.utils.BiObject;
-import com.tfc.utils.Compression;
 import com.tfc.utils.Location;
 import com.tfc.utils.Logger;
+import com.tfc.utils.files.Compression;
 import com.tfc.world.TerrainTriangle;
 
 import java.io.File;

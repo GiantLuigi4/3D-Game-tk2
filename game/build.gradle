@@ -9,6 +9,9 @@ project.ext.assetsDir = new File("../core/assets")
 
 dependencies {
     compileOnly "com.github.GiantLuigi4:FlameLoader:1.1"
+
+    // https://mvnrepository.com/artifact/net.lingala.zip4j/zip4j
+    compileOnly group: 'net.lingala.zip4j', name: 'zip4j', version: '2.6.1'
 }
 
 task run(dependsOn: classes, type: JavaExec) {

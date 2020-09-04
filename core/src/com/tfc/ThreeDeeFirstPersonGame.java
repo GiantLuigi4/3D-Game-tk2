@@ -32,6 +32,9 @@ import com.tfc.model.Triangle;
 import com.tfc.registry.Blocks;
 import com.tfc.registry.Textures;
 import com.tfc.utils.*;
+import com.tfc.utils.files.Compression;
+import com.tfc.utils.files.Files;
+import com.tfc.utils.files.Zip;
 import com.tfc.world.World;
 import com.tfc.world.chunks.Chunk;
 import com.tfc.world.chunks.ChunkPos;
@@ -47,8 +50,6 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
 
 public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements InputProcessor {
 	public SpriteBatch batch2d;
@@ -319,6 +320,7 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 		running.set(false);
 		
 		if (ingame) {
+			byte[] playerBytes = new byte[0];
 			try {
 				File player = new File(dir + "\\saves\\.demo_save\\players\\player1.data");
 				player.getParentFile().mkdirs();
@@ -334,54 +336,64 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 				}
 				writer.write(bytes);
 				writer.close();
+				playerBytes = bytes;
 			} catch (Throwable err) {
 				Logger.logErrFull(err);
 			}
 			
+			byte[] chunks = new byte[0];
 			try {
 				//https://www.codejava.net/java-se/file-io/how-to-compress-files-in-zip-format-in-java#:~:text=Here%20are%20the%20steps%20to,ZipEntry)%20method%20on%20the%20ZipOutputStream.
 				File zfile = new File(dir + "\\saves\\.demo_save\\chunks.zip");
-				if (!zfile.exists()) {
-					zfile.createNewFile();
-				}
-				FileOutputStream stream = new FileOutputStream(zfile);
-				ZipOutputStream fileSave = new ZipOutputStream(stream);
+				if (!zfile.exists()) zfile.createNewFile();
+//				FileOutputStream stream = new FileOutputStream(zfile);
+//				ZipOutputStream fileSave = new ZipOutputStream(stream);
+				Zip.ZipOutStream fileSave = Zip.createZipFile(zfile);
+				Zip.ZipOutStream fileSave1 = Zip.createZipFile();
 				for (Chunk chunk : world.chunks.values()) {
 					String pos = chunk.pos.chunkX + "," + chunk.pos.chunkY + "," + chunk.pos.chunkZ;
-					fileSave.putNextEntry(new ZipEntry(pos + ".data"));
-					char[] chars = Compression.deQuadruple(Compression.makeIllegible(Compression.compress(chunk.toString()))).toCharArray();
-					byte[] bytes = new byte[chars.length];
-					for (int i = 0; i < chars.length; i++) {
-						bytes[i] = (byte) chars[i];
-					}
-					fileSave.write(bytes);
-					fileSave.closeEntry();
+					fileSave.addFile(pos + ".data", Compression.deQuadruple(Compression.makeIllegible(Compression.compress(chunk.toString()))).toCharArray());
+					fileSave1.addFile(pos + ".data", Compression.deQuadruple(Compression.makeIllegible(Compression.compress(chunk.toString()))).toCharArray());
+//					char[] chars = Compression.deQuadruple(Compression.makeIllegible(Compression.compress(chunk.toString()))).toCharArray();
+//					byte[] bytes = new byte[chars.length];
+//					for (int i = 0; i < chars.length; i++) {
+//						bytes[i] = (byte) chars[i];
+//					}
+//					fileSave.write(bytes);
+//					fileSave.closeEntry();
 				}
-				fileSave.close();
+//				fileSave.close();
+				chunks = fileSave.finish();
+				chunks = fileSave1.finish();
 			} catch (Throwable err) {
 				Logger.logErrFull(err);
 			}
 			
+			byte[] terrain = new byte[0];
 			try {
 				//https://www.codejava.net/java-se/file-io/how-to-compress-files-in-zip-format-in-java#:~:text=Here%20are%20the%20steps%20to,ZipEntry)%20method%20on%20the%20ZipOutputStream.
 				File zfile = new File(dir + "\\saves\\.demo_save\\terrain.zip");
-				if (!zfile.exists()) {
-					zfile.createNewFile();
-				}
-				FileOutputStream stream = new FileOutputStream(zfile);
-				ZipOutputStream fileSave = new ZipOutputStream(stream);
+				if (!zfile.exists()) zfile.createNewFile();
+//				FileOutputStream stream = new FileOutputStream(zfile);
+//				ZipOutputStream fileSave = new ZipOutputStream(stream);
+				Zip.ZipOutStream fileSave = Zip.createZipFile(zfile);
+				Zip.ZipOutStream fileSave1 = Zip.createZipFile(zfile);
 				for (TerrainChunk chunk : world.terrainChunks.values()) {
 					String pos = chunk.pos.chunkX + "," + chunk.pos.chunkY + "," + chunk.pos.chunkZ;
-					fileSave.putNextEntry(new ZipEntry(pos + ".data"));
-					char[] chars = Compression.deQuadruple(Compression.makeIllegible(Compression.compress(chunk.toString()))).toCharArray();
-					byte[] bytes = new byte[chars.length];
-					for (int i = 0; i < chars.length; i++) {
-						bytes[i] = (byte) chars[i];
-					}
-					fileSave.write(bytes);
-					fileSave.closeEntry();
+					fileSave.addFile(pos + ".data", Compression.deQuadruple(Compression.makeIllegible(Compression.compress(chunk.toString()))));
+					fileSave1.addFile(pos + ".data", Compression.deQuadruple(Compression.makeIllegible(Compression.compress(chunk.toString()))));
+//					fileSave.putNextEntry(new ZipEntry(pos + ".data"));
+//					char[] chars = Compression.deQuadruple(Compression.makeIllegible(Compression.compress(chunk.toString()))).toCharArray();
+//					byte[] bytes = new byte[chars.length];
+//					for (int i = 0; i < chars.length; i++) {
+//						bytes[i] = (byte) chars[i];
+//					}
+//					fileSave.write(bytes);
+//					fileSave.closeEntry();
 				}
-				fileSave.close();
+//				fileSave.close();
+				fileSave.finish();
+				terrain = fileSave1.finish();
 			} catch (Throwable err) {
 				Logger.logErrFull(err);
 			}
@@ -395,6 +407,26 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 									"time:" + dayTime + "\n"
 					)))
 			);
+			try {
+				File zfile = new File(dir + "\\saves\\.demo_save.test.zip");
+				if (!zfile.exists()) zfile.createNewFile();
+				Zip.ZipOutStream stream = Zip.createZipFile(zfile);
+				Zip.ZipOutStream stream1 = Zip.createZipFile();
+				stream.addFile("players/player1.data", playerBytes);
+				stream1.addFile("players/player1.data", playerBytes);
+				stream.addFile("chunks.zip", chunks);
+				stream1.addFile("chunks.zip", chunks);
+				stream.addFile("terrain.zip", terrain);
+				stream1.addFile("terrain.zip", terrain);
+				stream.finish();
+				byte[] bytes = stream1.finish();
+				Zip.ZipInStream stream2 = new Zip.ZipInStream(bytes);
+//				System.out.println(Arrays.toString(stream2.get("players/player1.data")));
+//				stream2.close();
+			
+			} catch (Throwable ignored) {
+				Logger.logErrFull(ignored);
+			}
 		}
 		
 		try {
