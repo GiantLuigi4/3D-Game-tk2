@@ -3,7 +3,6 @@ package com.tfc.utils.files;
 import com.tfc.utils.BiObject;
 
 import java.io.*;
-import java.util.Arrays;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipInputStream;
@@ -92,10 +91,13 @@ public class Zip {
 			ZipInputStream stream1 = new ZipInputStream(stream);
 			ZipEntry entry = null;
 			while ((entry = stream1.getNextEntry()) != null) {
-				stream1.closeEntry();
-				byte[] bytes1 = new byte[stream1.available()];
-				stream1.read(bytes1);
-				System.out.println(Arrays.toString(bytes1));
+				int read = 0;
+				while ((read = stream1.read()) != -1) {
+					System.out.print((char) read);
+				}
+//				byte[] bytes1 = new byte[stream1.available()];
+//				stream1.read(bytes1);
+//				System.out.println(Arrays.toString(bytes1));
 			}
 			stream1.close();
 //			ByteArrayInputStream stream = new ByteArrayInputStream(bytes);
