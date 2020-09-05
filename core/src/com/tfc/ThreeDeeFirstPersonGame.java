@@ -291,7 +291,7 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 					leftDown = false;
 					world = new World();
 					
-					File file = new File(dir + "\\saves\\.demo_save");
+					File file = new File(dir + "\\saves\\.demo_save.gz");
 					if (!file.exists()) {
 						createWorld(file);
 					} else {
@@ -401,7 +401,7 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 			TFile file = new TFile(tfile);
 			world.loadAll(file.getInner());
 			world.loadTerrainChunks(file.getInner().getInner());
-			String playerData = Compression.decompress(Compression.makeLegible(file.get("players/player1.data")));
+			String playerData = Compression.decompress(Compression.makeLegible(file.get("player1.data")));
 			for (String s : playerData.split("\n")) {
 				String[] strings = s.split(",");
 				try {
