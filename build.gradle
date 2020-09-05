@@ -54,9 +54,6 @@ project(":game") {
         compileOnly "com.badlogicgames.gdx:gdx-controllers-desktop:$gdxVersion"
         compileOnly "com.badlogicgames.gdx:gdx-controllers-platform:$gdxVersion:natives-desktop"
         compileOnly "com.badlogicgames.gdx:gdx-bullet-platform:$gdxVersion:natives-desktop"
-
-        // https://mvnrepository.com/artifact/net.lingala.zip4j/zip4j
-        compileOnly group: 'net.lingala.zip4j', name: 'zip4j', version: '2.6.2'
     }
 }
 
@@ -86,8 +83,6 @@ project(":launcher") {
         compileOnly "com.badlogicgames.gdx:gdx:$gdxVersion"
         compileOnly "com.badlogicgames.gdx:gdx-controllers:$gdxVersion"
         compileOnly "com.badlogicgames.gdx:gdx-bullet:$gdxVersion"
-        // https://mvnrepository.com/artifact/net.lingala.zip4j/zip4j
-        compileOnly group: 'net.lingala.zip4j', name: 'zip4j', version: '2.6.2'
     }
 }
 
@@ -107,8 +102,5 @@ project(":core") {
 
         //PERLIN NOISE
         compileOnly "net.rgsw:noise:1.0.4"
-        //ZIP
-        // https://mvnrepository.com/artifact/net.lingala.zip4j/zip4j
-        compileOnly group: 'net.lingala.zip4j', name: 'zip4j', version: '2.6.2'
     }
 }

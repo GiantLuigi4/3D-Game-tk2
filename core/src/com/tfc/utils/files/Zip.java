@@ -5,7 +5,6 @@ import com.tfc.utils.BiObject;
 import java.io.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
-import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
 public class Zip {
@@ -82,35 +81,6 @@ public class Zip {
 		
 		public byte[] finish() throws IOException {
 			return Zip.finish(this);
-		}
-	}
-	
-	public static class ZipInStream {
-		public ZipInStream(byte[] bytes) throws IOException {
-			ByteArrayInputStream stream = new ByteArrayInputStream(bytes);
-			ZipInputStream stream1 = new ZipInputStream(stream);
-			ZipEntry entry = null;
-			while ((entry = stream1.getNextEntry()) != null) {
-				int read = 0;
-				while ((read = stream1.read()) != -1) {
-					System.out.print((char) read);
-				}
-//				byte[] bytes1 = new byte[stream1.available()];
-//				stream1.read(bytes1);
-//				System.out.println(Arrays.toString(bytes1));
-			}
-			stream1.close();
-//			ByteArrayInputStream stream = new ByteArrayInputStream(bytes);
-//			ZipInputStream stream1 = new ZipInputStream(stream);
-//			byte[] bytes1 = new byte[stream1.available()];
-//			System.out.println(stream1.available());
-//			stream1.read(bytes1);
-////			Zip4jUtil.readFully(stream1,bytes1);
-//			StringBuilder builder = new StringBuilder();
-//			for (byte b:bytes) builder.append((char)b);
-//			builder.append("\n\n\n\n");
-//			for (byte b:bytes1) builder.append((char)b);
-//			System.out.println(builder.toString());
 		}
 	}
 }

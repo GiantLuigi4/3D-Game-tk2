@@ -2,6 +2,8 @@ apply plugin: "java"
 
 dependencies {
     implementation "com.github.GiantLuigi4:FlameLoader:1.1"
+
+    implementation 'com.github.GiantLuigi4:TFileManipulation:9df10c06fc'
 }
 
 sourceCompatibility = 1.8
