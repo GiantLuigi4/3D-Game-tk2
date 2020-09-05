@@ -32,7 +32,10 @@ import com.tfc.model.Cube;
 import com.tfc.model.Triangle;
 import com.tfc.registry.Blocks;
 import com.tfc.registry.Textures;
-import com.tfc.utils.*;
+import com.tfc.utils.BiObject;
+import com.tfc.utils.Location;
+import com.tfc.utils.Logger;
+import com.tfc.utils.SpriteMap;
 import com.tfc.utils.files.Compression;
 import com.tfc.utils.files.Files;
 import com.tfc.utils.files.GZip;
@@ -67,7 +70,6 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 	public Texture hotbar;
 	public static final String dir = System.getProperty("user.dir");
 	public ModelBatch batch;
-	public TransformStack stack;
 	private static final DirectionalLight sunLight = new DirectionalLight();
 	public World world = new World();
 	
@@ -237,7 +239,6 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 				System.out.println(fragText.toString());
 				batch = new ModelBatch(vertText.toString(), fragText.toString());
 			}
-			stack = new TransformStack(batch2d);
 			
 			registryEvent.post();
 			

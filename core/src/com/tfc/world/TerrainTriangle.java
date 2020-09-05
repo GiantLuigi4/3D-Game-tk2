@@ -6,7 +6,6 @@ import com.badlogic.gdx.graphics.g3d.ModelInstance;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.math.collision.BoundingBox;
 import com.tfc.model.Triangle;
-import com.tfc.registry.Textures;
 import com.tfc.utils.Location;
 
 import java.util.ArrayList;
@@ -37,16 +36,12 @@ public class TerrainTriangle {
 	
 	public static TerrainTriangle fromString(String string) {
 		String text = string;
-//		System.out.println(text);
 		String num1 = text.substring(0, text.indexOf(","));
 		text = text.substring(text.indexOf(",") + 1);
-//		System.out.println(text);
 		String num2 = text.substring(0, text.indexOf(","));
 		text = text.substring(text.indexOf(",") + 1);
-//		System.out.println(text);
 		String num3 = text.substring(0, text.indexOf(":"));
 		text = text.substring(text.indexOf(":") + 1);
-//		System.out.println(text);
 		Vector3 v1 = new Vector3(
 				Float.parseFloat(num1.replace(",", "")),
 				Float.parseFloat(num2.replace(",", "")),
@@ -54,13 +49,10 @@ public class TerrainTriangle {
 		);
 		num1 = text.substring(0, text.indexOf(","));
 		text = text.substring(text.indexOf(",") + 1);
-//		System.out.println(text);
 		num2 = text.substring(0, text.indexOf(","));
 		text = text.substring(text.indexOf(",") + 1);
-//		System.out.println(text);
 		num3 = text.substring(0, text.indexOf(":"));
 		text = text.substring(text.indexOf(":") + 1);
-//		System.out.println(text);
 		Vector3 v2 = new Vector3(
 				Float.parseFloat(num1.replace(",", "")),
 				Float.parseFloat(num2.replace(",", "")),
@@ -68,13 +60,10 @@ public class TerrainTriangle {
 		);
 		num1 = text.substring(0, text.indexOf(","));
 		text = text.substring(text.indexOf(",") + 1);
-//		System.out.println(text);
 		num2 = text.substring(0, text.indexOf(","));
 		text = text.substring(text.indexOf(",") + 1);
-//		System.out.println(text);
 		num3 = text.substring(0, text.indexOf(":"));
 		text = text.substring(text.indexOf(":") + 1);
-//		System.out.println(text);
 		Vector3 v3 = new Vector3(
 				Float.parseFloat(num1.replace(",", "")),
 				Float.parseFloat(num2.replace(",", "")),
