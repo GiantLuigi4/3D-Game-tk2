@@ -36,7 +36,6 @@ import com.tfc.utils.*;
 import com.tfc.utils.files.Compression;
 import com.tfc.utils.files.Files;
 import com.tfc.utils.files.GZip;
-import com.tfc.utils.files.Zip;
 import com.tfc.world.World;
 import com.tfc.world.chunks.Chunk;
 import com.tfc.world.chunks.ChunkPos;
@@ -325,54 +324,43 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 			TFile tfile = new TFile();
 			tfile.createInnerTFile().createInnerTFile().createInnerTFile();
 			try {
-//				File player = new File(dir + "\\saves\\.demo_save\\players\\player1.data");
-//				player.getParentFile().mkdirs();
-//				player.createNewFile();
-//				FileOutputStream writer = new FileOutputStream(player);
 				String text1 = "pos:" + this.player.pos.x + "," + this.player.pos.y + "," + this.player.pos.z + "\n";
 				text1 += "rot:" + camRotX + "," + camRotY + "," + camRotZ + "\n";
 				String text = Compression.makeIllegible(Compression.compress(text1));
-				tfile.addFile("players/player1.data", text);
-//				char[] chars = text.toCharArray();
-//				byte[] bytes = new byte[chars.length];
-//				for (int i = 0; i < chars.length; i++) bytes[i] = (byte) chars[i];
-//				writer.write(bytes);
-//				writer.close();
+				tfile.addFile("player1.data", text);
 			} catch (Throwable err) {
 				Logger.logErrFull(err);
 			}
 			
 			try {
-				tfile.getInner().getInner().addFile("_", "_");
 				//https://www.codejava.net/java-se/file-io/how-to-compress-files-in-zip-format-in-java#:~:text=Here%20are%20the%20steps%20to,ZipEntry)%20method%20on%20the%20ZipOutputStream.
-				File zfile = new File(dir + "\\saves\\.demo_save\\chunks.zip");
-				if (!zfile.exists()) zfile.createNewFile();
-				Zip.ZipOutStream fileSave = Zip.createZipFile(zfile);
+//				File zfile = new File(dir + "\\saves\\.demo_save\\chunks.zip");
+//				if (!zfile.exists()) zfile.createNewFile();
+//				Zip.ZipOutStream fileSave = Zip.createZipFile(zfile);
 				for (Chunk chunk : world.chunks.values()) {
 					String pos = chunk.pos.chunkX + "," + chunk.pos.chunkY + "," + chunk.pos.chunkZ;
 					String text = Compression.deQuadruple(Compression.makeIllegible(Compression.compress(chunk.toString())));
-					fileSave.addFile(pos + ".data", text);
+//					fileSave.addFile(pos + ".data", text);
 					//add the file to the inner file of the tfile, inner files are an optimization method, and it's not bad optimization
 					tfile.getInner().getInner().addFile(pos + ".data", text);
 				}
-				fileSave.finish();
+//				fileSave.finish();
 			} catch (Throwable err) {
 				Logger.logErrFull(err);
 			}
 			
 			try {
-				tfile.getInner().getInner().getInner().addFile("_", "_");
 				//https://www.codejava.net/java-se/file-io/how-to-compress-files-in-zip-format-in-java#:~:text=Here%20are%20the%20steps%20to,ZipEntry)%20method%20on%20the%20ZipOutputStream.
-				File zfile = new File(dir + "\\saves\\.demo_save\\terrain.zip");
-				if (!zfile.exists()) zfile.createNewFile();
-				Zip.ZipOutStream fileSave = Zip.createZipFile(zfile);
+//				File zfile = new File(dir + "\\saves\\.demo_save\\terrain.zip");
+//				if (!zfile.exists()) zfile.createNewFile();
+//				Zip.ZipOutStream fileSave = Zip.createZipFile(zfile);
 				for (TerrainChunk chunk : world.terrainChunks.values()) {
 					String pos = chunk.pos.chunkX + "," + chunk.pos.chunkY + "," + chunk.pos.chunkZ;
 					String text = Compression.deQuadruple(Compression.makeIllegible(Compression.compress(chunk.toString())));
-					fileSave.addFile(pos + ".data", text);
+//					fileSave.addFile(pos + ".data", text);
 					tfile.getInner().getInner().getInner().addFile(pos + ".data", text);
 				}
-				fileSave.finish();
+//				fileSave.finish();
 			} catch (Throwable err) {
 				Logger.logErrFull(err);
 			}
@@ -384,10 +372,8 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 							"createNoise\n" +
 							"time:" + dayTime + "\n"
 			)));
-//			Files.createFile("saves\\.demo_save\\level.properties", text);
 			tfile.addFile("level.properties", text);
 			System.out.println(tfile.toString());
-//			Files.createFile("saves\\.demo_save.tfile", tfile.toString());
 			try {
 				byte[] bytes = GZip.gZip(tfile.toString());
 				Files.createFile("saves\\.demo_save.gz", bytes);
@@ -409,53 +395,11 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 	
 	private void loadWorld() {
 		try {
-			File file1 = new File(dir + "\\saves\\.demo_save\\chunks.zip");
-//			File file2 = new File(dir + "\\saves\\.demo_save\\players\\player1.data");
-			File file3 = new File(dir + "\\saves\\.demo_save\\terrain.zip");
-//			FileInputStream input2 = new FileInputStream(file2);
-//			StringBuilder builder2 = new StringBuilder();
-//			byte[] bytes2 = new byte[input2.available()];
-//			input2.read(bytes2);
-//			for (byte b : bytes2) {
-//				builder2.append((char) b);
-//			}
-//			input2.close();
-			world.loadAll(file1);
-//			String playerData = Compression.decompress(Compression.makeLegible(builder2.toString()));
-//			for (String s : playerData.split("\n")) {
-//				String[] strings = s.split(",");
-//				try {
-//					if (strings[0].startsWith("pos:")) {
-//						player.pos.x = Float.parseFloat(strings[0].replace("pos:", ""));
-//						player.pos.y = Float.parseFloat(strings[1]);
-//						player.pos.z = Float.parseFloat(strings[2]);
-//					} else if (strings[0].startsWith("rot:")) {
-//						camRotX = Double.parseDouble(strings[0].replace("rot:", ""));
-//						camRotY = Double.parseDouble(strings[1]);
-//						camRotZ = Double.parseDouble(strings[2]);
-//					}
-//				} catch (Throwable err) {
-//					Logger.logErrFull(err);
-//				}
-//			}
-			world.loadTerrainChunks(file3);
-//			String level = Compression.decompress(Compression.reQuadruple(Compression.makeLegible(Files.read("saves\\.demo_save\\level.data"))));
-//			for (String line : level.split("\n")) {
-//				if (line.startsWith("seed:")) {
-//					seed = Integer.parseInt(line.replace("seed:", ""));
-//				} else if (line.startsWith("time:")) {
-//					dayTime = Long.parseLong(line.replace("time:", ""));
-//				} else if (line.startsWith("scaleX:")) {
-//					scaleX = Integer.parseInt(line.replace("scaleX:", ""));
-//				} else if (line.startsWith("scaleY:")) {
-//					scaleY = Integer.parseInt(line.replace("scaleY:", ""));
-//				} else if (line.startsWith("createNoise")) {
-//					noise = new Perlin2D(seed, scaleX, scaleY);
-//				}
-//			}
 			ByteArrayInputStream stream = new ByteArrayInputStream(Files.readB("saves\\.demo_save.gz"));
 			String tfile = GZip.readString(new GZIPInputStream(stream));
 			TFile file = new TFile(tfile);
+			world.loadAll(file.getInner());
+			world.loadTerrainChunks(file.getInner().getInner());
 			String playerData = Compression.decompress(Compression.makeLegible(file.get("players/player1.data")));
 			for (String s : playerData.split("\n")) {
 				String[] strings = s.split(",");
@@ -494,7 +438,7 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 	
 	private void createWorld(File file) {
 		try {
-			file.mkdirs();
+			file.getParentFile().mkdirs();
 			int size = 16;
 			seed = new Random().nextInt();
 			scaleX = new Random(seed).nextInt(16) + 16;
@@ -503,7 +447,7 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 			for (int x = -size; x <= size; x++) {
 				for (int z = -size; z <= size; z++) {
 					world.generate(x, z, noise);
-
+					
 					int yPos = Math.abs(z) == (size - 2) ? 2 : Math.abs(x) == (size - 2) ? 2 : 0;
 					for (int y = 0; y <= yPos; y++) {
 						if (new Random().nextDouble() >= 0.75) {
@@ -521,23 +465,6 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 		} catch (Throwable err) {
 			Logger.logErrFull(err);
 		}
-
-//		try {
-//			File player = new File(dir + "\\saves\\.demo_save\\players\\player1.data");
-//			player.getParentFile().mkdirs();
-//			player.createNewFile();
-//			FileOutputStream writer = new FileOutputStream(player);
-//			String text = Compression.makeIllegible(Compression.compress("pos:0,128,0"));
-//			char[] chars = text.toCharArray();
-//			byte[] bytes = new byte[chars.length];
-//			for (int i = 0; i < chars.length; i++) {
-//				bytes[i] = (byte) chars[i];
-//			}
-//			writer.write(bytes);
-//			writer.close();
-//		} catch (Throwable err) {
-//			Logger.logErrFull(err);
-//		}
 	}
 	
 	@Override

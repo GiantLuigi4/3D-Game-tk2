@@ -102,5 +102,8 @@ project(":core") {
 
         //PERLIN NOISE
         compileOnly "net.rgsw:noise:1.0.4"
+
+        //Annotations
+        compile 'org.jetbrains:annotations:16.0.2'
     }
 }

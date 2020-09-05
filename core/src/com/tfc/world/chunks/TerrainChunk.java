@@ -71,6 +71,15 @@ public class TerrainChunk {
 		return null;
 	}
 	
+	public static TerrainChunk read(InputStream stream, ChunkPos pos) {
+		try {
+			return loadChunkFromStream(stream, pos);
+		} catch (Throwable err) {
+			Logger.logErrFull(err);
+		}
+		return null;
+	}
+	
 	private static TerrainChunk loadChunkFromStream(InputStream stream, ChunkPos pos) throws IOException {
 		byte[] bytes = new byte[stream.available()];
 		stream.read(bytes);

@@ -3,6 +3,7 @@ package com.tfc.world;
 import com.tfc.ThreeDeeFirstPersonGame;
 import com.tfc.blocks.Block;
 import com.tfc.blocks.BlockPos;
+import com.tfc.files.TFile;
 import com.tfc.registry.Blocks;
 import com.tfc.utils.BiObject;
 import com.tfc.utils.Location;
@@ -13,6 +14,7 @@ import com.tfc.world.chunks.Chunk;
 import com.tfc.world.chunks.ChunkPos;
 import com.tfc.world.chunks.TerrainChunk;
 import net.rgsw.ptg.noise.Noise2D;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -21,6 +23,7 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.Objects;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -71,6 +74,20 @@ public class World {
 		}
 	}
 	
+	public void loadTerrainChunks(TFile file) {
+		file.listAllNames().forEach(name -> {
+			String pos = name.replace(".data", "");
+			String[] nums = pos.split(",");
+			ChunkPos pos1 = new ChunkPos(
+					Integer.parseInt(nums[0]),
+					Integer.parseInt(nums[1]),
+					Integer.parseInt(nums[2])
+			);
+			TerrainChunk chunk = TerrainChunk.read(file.getAsStream(name), pos1);
+			this.terrainChunks.put(pos1, chunk);
+		});
+	}
+	
 	public void loadAll(File file) {
 		if (file.getName().endsWith(".zip")) {
 			try {
@@ -85,7 +102,7 @@ public class World {
 				Logger.logErrFull(err);
 			}
 		} else {
-			for (File chunk : file.listFiles()) {
+			for (File chunk : Objects.requireNonNull(file.listFiles())) {
 				try {
 					FileInputStream input = new FileInputStream(chunk);
 					loadChunkFromStream(input);
@@ -96,7 +113,17 @@ public class World {
 		}
 	}
 	
-	private void loadChunkFromStream(InputStream input) throws IOException {
+	public void loadAll(@NotNull TFile file) {
+		file.listAllNames().forEach((name) -> {
+			try {
+				loadChunkFromStream(file.getAsStream(name));
+			} catch (Throwable err) {
+				Logger.logErrFull(err);
+			}
+		});
+	}
+	
+	private void loadChunkFromStream(@NotNull InputStream input) throws IOException {
 		StringBuilder builder = new StringBuilder();
 		byte[] bytes = new byte[input.available()];
 		input.read(bytes);
@@ -109,7 +136,7 @@ public class World {
 		loadChunkFromString(saveData);
 	}
 	
-	private void loadChunkFromString(String saveData) {
+	private void loadChunkFromString(@NotNull String saveData) {
 		for (String s : saveData.split("\n")) {
 			String[] strings = s.split(",");
 			try {
@@ -126,7 +153,7 @@ public class World {
 		}
 	}
 	
-	public void addTerrainTriangle(TerrainTriangle triangle) {
+	public void addTerrainTriangle(@NotNull TerrainTriangle triangle) {
 		ChunkPos pos = new ChunkPos(new BlockPos(
 				(int) Math.min(triangle.v1.x, Math.min(triangle.v2.x, triangle.v3.x)),
 				(int) Math.min(triangle.v1.y, Math.min(triangle.v2.y, triangle.v3.y)),
@@ -142,7 +169,7 @@ public class World {
 		}
 	}
 	
-	public void loadChunk(File file, String posLoad) {
+	public void loadChunk(@NotNull File file, String posLoad) {
 		if (file.getName().endsWith(".zip")) {
 			try {
 				ZipFile file1 = new ZipFile(file);
@@ -154,7 +181,7 @@ public class World {
 				Logger.logErrFull(err);
 			}
 		} else {
-			for (File chunk : file.listFiles()) {
+			for (File chunk : Objects.requireNonNull(file.listFiles())) {
 				if (file.getName().startsWith(posLoad)) {
 					try {
 						FileInputStream input = new FileInputStream(chunk);
