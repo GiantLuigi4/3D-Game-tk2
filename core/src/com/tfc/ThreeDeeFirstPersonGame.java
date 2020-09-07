@@ -26,7 +26,7 @@ import com.tfc.entity.Player;
 import com.tfc.events.EventBase;
 import com.tfc.events.registry.Registry;
 import com.tfc.events.render.RenderUI;
-import com.tfc.files.TFile;
+import com.tfc.files.tfile.TFile;
 import com.tfc.flame.FlameConfig;
 import com.tfc.model.Cube;
 import com.tfc.model.Triangle;
@@ -36,6 +36,7 @@ import com.tfc.utils.BiObject;
 import com.tfc.utils.Location;
 import com.tfc.utils.Logger;
 import com.tfc.utils.SpriteMap;
+import com.tfc.utils.discord.rich_presence.RichPresence;
 import com.tfc.utils.files.Compression;
 import com.tfc.utils.files.Files;
 import com.tfc.utils.files.GZip;
@@ -129,7 +130,6 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 	
 	@Override
 	public boolean keyDown(int keycode) {
-//		System.out.println(keycode);
 		if (!keys.contains(keycode)) {
 			keys.add(keycode);
 		}
@@ -176,6 +176,8 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 	@Override
 	public void create() {
 		try {
+			RichPresence.main(new String[0]);
+			RichPresence.update("In menu", "");
 			
 			File vert = new File(dir + "\\shaders\\vert.glsl");
 			File frag = new File(dir + "\\shaders\\frag.glsl");
@@ -316,70 +318,71 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 	
 	@Override
 	public void dispose() {
-		batch.dispose();
-		batch2d.dispose();
-		Textures.close();
-		running.set(false);
-		
-		if (ingame) {
-			TFile tfile = new TFile();
-			tfile.createInnerTFile().createInnerTFile().createInnerTFile();
-			try {
-				String text1 = "pos:" + this.player.pos.x + "," + this.player.pos.y + "," + this.player.pos.z + "\n";
-				text1 += "rot:" + camRotX + "," + camRotY + "," + camRotZ + "\n";
-				String text = Compression.makeIllegible(Compression.compress(text1));
-				tfile.addFile("player1.data", text);
-			} catch (Throwable err) {
-				Logger.logErrFull(err);
-			}
+		try {
+			batch.dispose();
+			batch2d.dispose();
+			Textures.close();
+			running.set(false);
 			
-			try {
-				//https://www.codejava.net/java-se/file-io/how-to-compress-files-in-zip-format-in-java#:~:text=Here%20are%20the%20steps%20to,ZipEntry)%20method%20on%20the%20ZipOutputStream.
-//				File zfile = new File(dir + "\\saves\\.demo_save\\chunks.zip");
-//				if (!zfile.exists()) zfile.createNewFile();
-//				Zip.ZipOutStream fileSave = Zip.createZipFile(zfile);
-				for (Chunk chunk : world.chunks.values()) {
-					String pos = chunk.pos.chunkX + "," + chunk.pos.chunkY + "," + chunk.pos.chunkZ;
-					String text = Compression.deQuadruple(Compression.makeIllegible(Compression.compress(chunk.toString())));
-//					fileSave.addFile(pos + ".data", text);
-					//add the file to the inner file of the tfile, inner files are an optimization method, and it's not bad optimization
-					tfile.getInner().getInner().addFile(pos + ".data", text);
+			if (ingame) {
+				TFile tfile = new TFile();
+				tfile
+						//Players
+						.createInnerTFile()
+						//Chunks
+						.createInnerTFile()
+						//Terrain
+						.createInnerTFile();
+				try {
+					String text1 = "pos:" + this.player.pos.x + "," + this.player.pos.y + "," + this.player.pos.z + "\n";
+					text1 += "rot:" + camRotX + "," + camRotY + "," + camRotZ + "\n";
+					String text = Compression.makeIllegible(Compression.compress(text1));
+					tfile.addFile("player1.data", text);
+				} catch (Throwable err) {
+					Logger.logErrFull(err);
 				}
-//				fileSave.finish();
-			} catch (Throwable err) {
-				Logger.logErrFull(err);
-			}
-			
-			try {
-				//https://www.codejava.net/java-se/file-io/how-to-compress-files-in-zip-format-in-java#:~:text=Here%20are%20the%20steps%20to,ZipEntry)%20method%20on%20the%20ZipOutputStream.
-//				File zfile = new File(dir + "\\saves\\.demo_save\\terrain.zip");
-//				if (!zfile.exists()) zfile.createNewFile();
-//				Zip.ZipOutStream fileSave = Zip.createZipFile(zfile);
-				for (TerrainChunk chunk : world.terrainChunks.values()) {
-					String pos = chunk.pos.chunkX + "," + chunk.pos.chunkY + "," + chunk.pos.chunkZ;
-					String text = Compression.deQuadruple(Compression.makeIllegible(Compression.compress(chunk.toString())));
-//					fileSave.addFile(pos + ".data", text);
-					tfile.getInner().getInner().getInner().addFile(pos + ".data", text);
+				
+				try {
+					//https://www.codejava.net/java-se/file-io/how-to-compress-files-in-zip-format-in-java#:~:text=Here%20are%20the%20steps%20to,ZipEntry)%20method%20on%20the%20ZipOutputStream.
+					for (Chunk chunk : world.chunks.values()) {
+						String pos = chunk.pos.chunkX + "," + chunk.pos.chunkY + "," + chunk.pos.chunkZ;
+						String text = Compression.deQuadruple(Compression.makeIllegible(Compression.compress(chunk.toString())));
+						//add the file to the inner file of the tfile, inner files are an optimization method, and it's not bad optimization
+						tfile.getInner().getInner().addFile(pos + ".data", text);
+					}
+				} catch (Throwable err) {
+					Logger.logErrFull(err);
 				}
-//				fileSave.finish();
-			} catch (Throwable err) {
-				Logger.logErrFull(err);
+				
+				try {
+					//https://www.codejava.net/java-se/file-io/how-to-compress-files-in-zip-format-in-java#:~:text=Here%20are%20the%20steps%20to,ZipEntry)%20method%20on%20the%20ZipOutputStream.
+					for (TerrainChunk chunk : world.terrainChunks.values()) {
+						String pos = chunk.pos.chunkX + "," + chunk.pos.chunkY + "," + chunk.pos.chunkZ;
+						String text = Compression.deQuadruple(Compression.makeIllegible(Compression.compress(chunk.toString())));
+						tfile.getInner().getInner().getInner().addFile(pos + ".data", text);
+					}
+				} catch (Throwable err) {
+					Logger.logErrFull(err);
+				}
+				String text = Compression.makeIllegible(Compression.deQuadruple(Compression.compress(
+						"//I guess you can tamper with this (for now)" + "\n" +
+								"seed:" + seed + "\n" +
+								"scaleX:" + scaleX + "\n" +
+								"scaleY:" + scaleY + "\n" +
+								"createNoise\n" +
+								"time:" + dayTime + "\n"
+				)));
+				tfile.addFile("level.properties", text);
+				System.out.println(tfile.toString());
+				try {
+					byte[] bytes = GZip.gZip(tfile.toString());
+					Files.createFile("saves\\.demo_save.gz", bytes);
+				} catch (Throwable err) {
+					Logger.logErrFull(err);
+				}
 			}
-			String text = Compression.makeIllegible(Compression.deQuadruple(Compression.compress(
-					"//I guess you can tamper with this (for now)" + "\n" +
-							"seed:" + seed + "\n" +
-							"scaleX:" + scaleX + "\n" +
-							"scaleY:" + scaleY + "\n" +
-							"createNoise\n" +
-							"time:" + dayTime + "\n"
-			)));
-			tfile.addFile("level.properties", text);
-			System.out.println(tfile.toString());
-			try {
-				byte[] bytes = GZip.gZip(tfile.toString());
-				Files.createFile("saves\\.demo_save.gz", bytes);
-			} catch (Throwable ignored) {
-			}
+		} catch (Throwable err) {
+			Logger.logErrFull(err);
 		}
 		
 		try {

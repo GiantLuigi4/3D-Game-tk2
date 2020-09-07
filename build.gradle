@@ -23,6 +23,7 @@ allprojects {
     ext {
         appName = "3DFPGame"
         gdxVersion = '1.9.11'
+        flameVersion = 'f0250ebbd7'
         roboVMVersion = '2.3.8'
         box2DLightsVersion = '1.4'
         ashleyVersion = '1.7.0'

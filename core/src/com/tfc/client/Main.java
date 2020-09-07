@@ -7,6 +7,7 @@ import com.tfc.blocks.Block;
 import com.tfc.blocks.BlockPos;
 import com.tfc.entity.Player;
 import com.tfc.utils.BiObject;
+import com.tfc.utils.discord.rich_presence.RichPresence;
 
 import java.util.ArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -17,6 +18,8 @@ public class Main {
 	
 	private static boolean isFlying = false;
 	private static boolean releasedSpaceInAir = false;
+	
+	private static int lastDRPCUpdate = 0;
 	
 	public static void tick(ArrayList<Integer> keys) {
 		Player player = getInstance().player;
@@ -169,5 +172,14 @@ public class Main {
 		} catch (Throwable ignored) {
 		}
 		getInstance().dayTime++;
+		
+		if (lastDRPCUpdate >= 50) {
+			lastDRPCUpdate = 0;
+			if (RichPresence.isReady()) {
+				RichPresence.update("In world", ".demo_save");
+			}
+		}
+		
+		lastDRPCUpdate++;
 	}
 }

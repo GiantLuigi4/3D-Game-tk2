@@ -85,7 +85,7 @@ public class Compression {
 					char4 = char4 + c;
 				}
 				if (char4.length() == 4) {
-					text1 = text1.replace(char4, c + "§");
+					text1 = text1.replace(char4, c + "" + (char) 5);
 				}
 			} else {
 				char4 = "" + c;
@@ -96,10 +96,10 @@ public class Compression {
 	
 	public static String reQuadruple(String text) {
 		String text1 = text;
-		while (text1.contains("§")) {
-			String charAt = "" + text.charAt(text.indexOf("§") - 1);
+		while (text1.contains("" + (char) 5)) {
+			String charAt = "" + text.charAt(text.indexOf("" + (char) 5) - 1);
 			text1 = text1.replace(
-					charAt + "§",
+					charAt + (char) 5,
 					charAt + charAt + charAt + charAt
 			);
 		}

@@ -3,7 +3,7 @@ package com.tfc.world;
 import com.tfc.ThreeDeeFirstPersonGame;
 import com.tfc.blocks.Block;
 import com.tfc.blocks.BlockPos;
-import com.tfc.files.TFile;
+import com.tfc.files.tfile.TFile;
 import com.tfc.registry.Blocks;
 import com.tfc.utils.BiObject;
 import com.tfc.utils.Location;

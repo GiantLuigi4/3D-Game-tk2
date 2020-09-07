@@ -10,3 +10,4 @@ https://repo1.maven.org/maven2/,org.lwjgl.lwjgl:lwjgl_util:2.9.3,
 https://repo1.maven.org/maven2/,com.badlogicgames.jlayer:jlayer:1.0.1-gdx,
 https://repo1.maven.org/maven2/,org.jcraft:jorbis:0.0.17,
 https://repo1.maven.org/maven2/,com.badlogicgames.gdx:gdx-platform:1.9.11,
+https://jitpack.io/,com.github.Vatuu:discord-rpc:1.6.2
