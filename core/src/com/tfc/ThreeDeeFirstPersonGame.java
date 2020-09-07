@@ -32,15 +32,16 @@ import com.tfc.model.Cube;
 import com.tfc.model.Triangle;
 import com.tfc.registry.Blocks;
 import com.tfc.registry.Textures;
+import com.tfc.renderer.ui.All;
 import com.tfc.utils.BiObject;
 import com.tfc.utils.Location;
 import com.tfc.utils.Logger;
-import com.tfc.utils.SpriteMap;
 import com.tfc.utils.awt.AwtWrapper;
 import com.tfc.utils.discord.rich_presence.RichPresence;
 import com.tfc.utils.files.Compression;
 import com.tfc.utils.files.Files;
 import com.tfc.utils.files.GZip;
+import com.tfc.utils.rendering.Font;
 import com.tfc.world.World;
 import com.tfc.world.chunks.Chunk;
 import com.tfc.world.chunks.ChunkPos;
@@ -90,6 +91,21 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 	public long dayTime = 0;
 	public int seed = 0;
 	
+	/*
+	0 = title
+	1 = world list
+	2 = pause (nyi)
+	 */
+	public static int menu = 0;
+	public static Font defaultFont;
+	public String worldFile = "";
+	public TFile file = null;
+	public boolean ingame = false;
+	
+	public int getMouseX() {
+		return mx;
+	}
+	
 	private static void register(String name) {
 		Blocks.register(new Block(new Location(namespace + ":" + name), Cube.createModel((new Location(namespace + ":" + name)))));
 	}
@@ -103,7 +119,25 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 	boolean leftDown = false;
 	boolean rightDown = false;
 	
-	private boolean ingame = false;
+	public int getMouseY() {
+		return my;
+	}
+	
+	public boolean isLeftDown() {
+		return leftDown;
+	}
+	
+	public void setLeftDown(boolean leftDown) {
+		this.leftDown = leftDown;
+	}
+	
+	public boolean isRightDown() {
+		return rightDown;
+	}
+	
+	public void setRightDown(boolean rightDown) {
+		this.rightDown = rightDown;
+	}
 	
 	private final Vector3 lastPos = new Vector3();
 	
@@ -148,9 +182,14 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 		Textures.register(new Location(namespace + ":glass"), new Texture("assets\\blocks\\glass.png"));
 		Textures.register(new Location(namespace + ":debug_one"), new Texture("assets\\blocks\\debug\\debug1.png"));
 		Textures.register(new Location(namespace + ":bounding_box"), new Texture("assets\\ui\\bounding_box\\black_border.png"));
+		Textures.register(new Location(namespace + ":white_outline"), new Texture("assets\\ui\\bounding_box\\white_border.png"));
+		Textures.register(new Location(namespace + ":save_bg"), new Texture("assets\\ui\\menu\\world_bg.png"));
 		Textures.register(new Location(namespace + ":hotbar"), new Texture("assets\\ui\\ingame\\hotbar_slot.png"));
 		Textures.register(new Location(namespace + ":button"), new Texture("assets\\ui\\menu\\button.png"));
 		Textures.register(new Location(namespace + ":button_hovered"), new Texture("assets\\ui\\menu\\button_hovered.png"));
+		Textures.register(new Location(namespace + ":font"), new Texture("assets\\ui\\font\\font1.png"));
+		
+		defaultFont = new Font(Textures.get(new Location(namespace + ":font")), 14, 30);
 		
 		register("sand");
 		register("stone");
@@ -224,7 +263,7 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 			Registry registryEvent = (Registry) Objects.requireNonNull(EventBase.getOrCreateInstance(Registry.class));
 			
 			registryEvent.register(new Location(namespace + ":register"), this::register);
-			renderEvent.register(new Location(namespace + ":ui"), this::renderUI);
+			renderEvent.register(new Location(namespace + ":ui"), All::render);
 			
 			Gdx.graphics.setTitle(namespace);
 			Gdx.graphics.setVSync(true);
@@ -259,59 +298,8 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 			Logger.logErrFull(err);
 		}
 		
+		logic.setDaemon(false);
 		logic.start();
-	}
-	
-	private void renderUI(EventBase eventBase) {
-		RenderUI event = (RenderUI) eventBase;
-		if (ingame) {
-			for (int i = 0; i < 10; i++) {
-//				spritehotbar.setScale((480f / hotbar.getWidth()) * 0.1f, (480f / hotbar.getHeight()) * 0.1f);
-//				if (slot == i) {
-//					spritehotbar.setScale((480f / hotbar.getWidth()) * 0.11f, (480f / hotbar.getHeight()) * 0.11f);
-//				}
-				float offXSelected = 1.9575f;
-				float offXNormal = 2;
-				spritehotbar.setSize(slot == i ? 52 : 48, slot == i ? 52 : 48);
-				spritehotbar.setPosition((i + (slot == i ? offXSelected : offXNormal)) * 48, (2 - (slot == i ? 4.5f : 2)));
-				spritehotbar.draw(event.getBatch());
-				if (i < Blocks.count()) {
-					Block block = Blocks.getByID(i);
-					int size = 36;
-					Sprite sprite = SpriteMap.getOrCreate(block.getName());
-					sprite.setPosition(102 + (i * (size + 12)), 6);
-					sprite.setSize(size, size);
-					sprite.draw(event.getBatch());
-				}
-			}
-		} else {
-			Texture texture;
-			float percentX = mx / (float) Gdx.graphics.getWidth();
-			float percentY = my / (float) Gdx.graphics.getHeight();
-			if (percentX >= 0.405 && percentX <= 0.605 && percentY >= 0.4075 && percentY <= 0.5425) {
-				texture = Textures.get(new Location(namespace + ":button_hovered"));
-				if (leftDown) {
-					leftDown = false;
-					world = new World();
-					
-					File file = new File(dir + "\\saves\\.demo_save.gz");
-					if (!file.exists()) {
-						createWorld(file);
-					} else {
-						loadWorld();
-					}
-					
-					ingame = true;
-				}
-			} else {
-				texture = Textures.get(new Location(namespace + ":button"));
-			}
-			event.getBatch().draw(
-					texture,
-					260, 220,
-					128, 64
-			);
-		}
 	}
 	
 	int scaleX = 30;
@@ -377,7 +365,7 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 				System.out.println(tfile.toString());
 				try {
 					byte[] bytes = GZip.gZip(tfile.toString());
-					Files.createFile("saves\\.demo_save.gz", bytes);
+					Files.createFile(this.worldFile, bytes);
 				} catch (Throwable err) {
 					Logger.logErrFull(err);
 				}
@@ -398,11 +386,12 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 		}
 	}
 	
-	private void loadWorld() {
+	public void loadWorld(String worldFile) {
 		try {
-			ByteArrayInputStream stream = new ByteArrayInputStream(Files.readB("saves\\.demo_save.gz"));
+			ByteArrayInputStream stream = new ByteArrayInputStream(Files.readB(worldFile));
 			String tfile = GZip.readString(new GZIPInputStream(stream));
-			TFile file = new TFile(tfile);
+			this.worldFile = worldFile;
+			file = new TFile(tfile);
 			world.loadAll(file.getInner());
 			world.loadTerrainChunks(file.getInner().getInner());
 			String playerData = Compression.decompress(Compression.makeLegible(file.get("player1.data")));
@@ -441,10 +430,11 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 		}
 	}
 	
-	private void createWorld(File file) {
+	public void createWorld(File file) {
 		try {
 			file.getParentFile().mkdirs();
 			int size = 16;
+			this.worldFile = "saves/" + file.getName();
 			seed = new Random().nextInt();
 			scaleX = new Random(seed).nextInt(16) + 16;
 			scaleY = new Random(seed * 2).nextInt(16) + 16;
@@ -524,8 +514,7 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 					}
 				});
 				world.needsRefresh.clear();
-
-//				world.terrainChunks.forEach((pos, chunk) -> chunk.forEach(triangle -> triangle.draw(batch, environment, offset)));
+				
 				world.terrainChunks.forEach((pos, chunk) -> {
 					if (!terrainChunkModels.containsKey(pos)) {
 						ModelInstance instance = chunk.bake();
@@ -717,5 +706,13 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 			slot = 0;
 		}
 		return false;
+	}
+	
+	public int getSlot() {
+		return slot;
+	}
+	
+	public void setSlot(int slot) {
+		this.slot = slot;
 	}
 }

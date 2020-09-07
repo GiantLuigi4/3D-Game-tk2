@@ -16,6 +16,10 @@ public class Textures {
 		return textures.get(name);
 	}
 	
+	public static boolean contains(Location name) {
+		return textures.containsKey(name);
+	}
+	
 	public static void close() {
 		textures.forEach((location, texture) -> {
 			texture.dispose();

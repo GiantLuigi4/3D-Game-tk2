@@ -27,6 +27,10 @@ public class Files {
 		}
 	}
 	
+	public static File get(String name) {
+		return new File(ThreeDeeFirstPersonGame.dir + "\\" + (name.replace("/", "" + File.separatorChar)));
+	}
+	
 	public static void createFile(String name, byte[] bytes) {
 		String directory = ThreeDeeFirstPersonGame.dir + "\\" + name;
 		try {
