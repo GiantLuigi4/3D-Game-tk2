@@ -36,6 +36,7 @@ import com.tfc.utils.BiObject;
 import com.tfc.utils.Location;
 import com.tfc.utils.Logger;
 import com.tfc.utils.SpriteMap;
+import com.tfc.utils.awt.AwtWrapper;
 import com.tfc.utils.discord.rich_presence.RichPresence;
 import com.tfc.utils.files.Compression;
 import com.tfc.utils.files.Files;
@@ -492,7 +493,7 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 			
 			camera.update();
 			
-			Vector3 lerped = lastPos.lerp(player.pos,Math.max(0,Math.min(1,Math.abs(((new Date().getTime()-lastTick.get())/10f)))));
+			Vector3 lerped = lastPos.lerp(player.pos, Math.max(0, Math.min(1, Math.abs(((new Date().getTime() - lastTick.get()) / 10f)))));
 			Vector3 offset = new Vector3(-lerped.x, -lerped.y, -lerped.z);
 			
 			Gdx.gl.glClearColor(0, 1f, 1f, 1);
@@ -582,32 +583,32 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 								Vector3 posPlusZ = new Vector3(pos.x, pos.y, pos.z + be);
 								Vector3 posMinusZ = new Vector3(pos.x, pos.y, pos.z - be);
 								Block block1 = world.getBlock(new BlockPos(posPlusX));
-								if (block1==null) {
+								if (block1 == null) {
 									world.setBlock(new BlockPos(posPlusX), place);
 									break;
 								}
 								block1 = world.getBlock(new BlockPos(posMinusX));
-								if (block1==null) {
+								if (block1 == null) {
 									world.setBlock(new BlockPos(posMinusX), place);
 									break;
 								}
 								block1 = world.getBlock(new BlockPos(posPlusY));
-								if (block1==null) {
+								if (block1 == null) {
 									world.setBlock(new BlockPos(posPlusY), place);
 									break;
 								}
 								block1 = world.getBlock(new BlockPos(posMinusY));
-								if (block1==null) {
+								if (block1 == null) {
 									world.setBlock(new BlockPos(posMinusY), place);
 									break;
 								}
 								block1 = world.getBlock(new BlockPos(posPlusZ));
-								if (block1==null) {
+								if (block1 == null) {
 									world.setBlock(new BlockPos(posPlusZ), place);
 									break;
 								}
 								block1 = world.getBlock(new BlockPos(posMinusZ));
-								if (block1==null) {
+								if (block1 == null) {
 									world.setBlock(new BlockPos(posMinusZ), place);
 									break;
 								}
@@ -681,8 +682,25 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 	
 	@Override
 	public boolean mouseMoved(int screenX, int screenY) {
-		mx = screenX;
-		my = screenY;
+		if (ingame) {
+			camRotX += (mx - screenX) / 16f;
+			camRotY += (my - screenY) / 16f;
+			BiObject<Integer, Integer> loc = AwtWrapper.getMouseLocation();
+//			AwtWrapper.mouseMove(
+//					(loc.getObj1() - screenX) + (Gdx.graphics.getWidth() / 2),
+//					(loc.getObj2() - screenY) + (Gdx.graphics.getHeight() / 2)
+//			);
+			AwtWrapper.mouseOffset(
+					(-screenX + (Gdx.graphics.getWidth() / 2)) / 4,
+					(-screenY + (Gdx.graphics.getHeight() / 2)) / 4
+			);
+			AwtWrapper.waitForIdle();
+			mx = (Gdx.graphics.getWidth() / 2);
+			my = (Gdx.graphics.getHeight() / 2);
+		} else {
+			mx = screenX;
+			my = screenY;
+		}
 		return false;
 	}
 	
