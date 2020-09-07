@@ -76,8 +76,8 @@ public class Main {
 						BoundingBox cb = block.getObj1().getCollisionBox(block.getObj2());
 						//Floor Collision
 						if (cb.intersects(new BoundingBox(
-								new Vector3(player.pos.x - widthMinusPadding, player.pos.y - playerHeight, player.pos.z - widthMinusPadding),
-								new Vector3(player.pos.x + widthMinusPadding, player.pos.y - (playerHeight / 2f), player.pos.z + widthMinusPadding)
+								new Vector3(player.pos.x + 0.5f - widthMinusPadding, player.pos.y - playerHeight, player.pos.z + 0.5f - widthMinusPadding),
+								new Vector3(player.pos.x + 1.45f + widthMinusPadding, player.pos.y - (playerHeight / 2f), player.pos.z + 1.45f + widthMinusPadding)
 						))) {
 							player.pos.y += (cb.max.y - (player.pos.y - playerHeight));
 							player.velocity.y = 0;
@@ -85,34 +85,34 @@ public class Main {
 						}
 						//Wall Collision -X
 						if (cb.intersects(new BoundingBox(
-								new Vector3(player.pos.x - widthPlusPadding, wallCollisionYBottom, player.pos.z - widthMinusPadding),
-								new Vector3(player.pos.x + 0, wallCollisionYTop, player.pos.z + widthMinusPadding)
+								new Vector3(player.pos.x + 0.5f - widthPlusPadding, wallCollisionYBottom, player.pos.z + 0.5f - widthMinusPadding),
+								new Vector3(player.pos.x + 0.5f, wallCollisionYTop, player.pos.z + 0.5f + widthMinusPadding)
 						))) {
-							player.pos.x += (cb.max.x - (player.pos.x - widthPlusPadding));
+							player.pos.x += (cb.max.x - (player.pos.x + 0.5f - (widthPlusPadding + 0.01f)));
 							player.velocity.x = 0;
 						}
 						//Wall Collision +X
 						if (cb.intersects(new BoundingBox(
-								new Vector3(player.pos.x - 0, wallCollisionYBottom, player.pos.z - widthMinusPadding),
-								new Vector3(player.pos.x + widthPlusOnePlusPadding + (padding * 3.999f), wallCollisionYTop, player.pos.z + widthMinusPadding)
+								new Vector3(player.pos.x + 0.5f, wallCollisionYBottom, player.pos.z + 0.5f - widthMinusPadding),
+								new Vector3(player.pos.x + 1.5f + widthPlusPadding, wallCollisionYTop, player.pos.z + 0.5f + widthMinusPadding)
 						))) {
-							player.pos.x += (cb.min.x - (player.pos.x + widthPlusOnePlusPadding + (padding * 4)));
+							player.pos.x += (cb.min.x - (player.pos.x + 1.5f + (widthPlusPadding + 0.01f)));
 							player.velocity.x = 0;
 						}
 						//Wall Collision -Z
 						if (cb.intersects(new BoundingBox(
-								new Vector3(player.pos.x - widthMinusPadding, wallCollisionYBottom, player.pos.z - widthPlusPadding),
-								new Vector3(player.pos.x + widthMinusPadding, wallCollisionYTop, player.pos.z + 0)
+								new Vector3(player.pos.x + 0.5f - widthMinusPadding, wallCollisionYBottom, player.pos.z + 0.5f - widthPlusPadding),
+								new Vector3(player.pos.x + 0.5f + widthMinusPadding, wallCollisionYTop, player.pos.z + 0.5f)
 						))) {
-							player.pos.z += (cb.max.z - (player.pos.z - widthPlusPadding));
+							player.pos.z += (cb.max.z - (player.pos.z + 0.5f - (widthPlusPadding + 0.01f)));
 							player.velocity.z = 0;
 						}
 						//Wall Collision +Z
 						if (cb.intersects(new BoundingBox(
-								new Vector3(player.pos.x - widthMinusPadding, wallCollisionYBottom, player.pos.z - 0),
-								new Vector3(player.pos.x + widthMinusPadding, wallCollisionYTop, player.pos.z + widthPlusOnePlusPadding + (padding * 3.999f))
+								new Vector3(player.pos.x + 0.5f - widthMinusPadding, wallCollisionYBottom, player.pos.z + 0.5f),
+								new Vector3(player.pos.x + 1.5f + widthMinusPadding, wallCollisionYTop, player.pos.z + 1.5f + widthPlusPadding)
 						))) {
-							player.pos.z += (cb.min.z - (player.pos.z + widthPlusOnePlusPadding + (padding * 4)));
+							player.pos.z += (cb.min.z - (player.pos.z + 1.5f + (widthPlusPadding + 0.01f)));
 							player.velocity.z = 0;
 						}
 					}
@@ -137,11 +137,11 @@ public class Main {
 		
 		if (keys.contains(Input.Keys.SPACE)) {
 			if (player.onGround) {
-				player.velocity.lerp(new Vector3(player.velocity.x, 2.0f, player.velocity.z), 0.1f);
+				player.velocity.lerp(new Vector3(player.velocity.x, 0.25f, player.velocity.z), 1f);
 				releasedSpaceInAir = false;
 			} else if (releasedSpaceInAir) {
 				isFlying = true;
-				player.velocity.lerp(new Vector3(player.velocity.x, 2.0f, player.velocity.z), 0.1f);
+				player.velocity.lerp(new Vector3(player.velocity.x, 0.25f, player.velocity.z), 1f);
 			}
 		} else {
 			if (!player.onGround) {
