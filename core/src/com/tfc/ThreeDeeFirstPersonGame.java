@@ -69,6 +69,8 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 		return INSTANCE;
 	}
 	
+	private static int lastGC = 0;
+	
 	public PerspectiveCamera camera;
 	public Texture hotbar;
 	public static final String dir = System.getProperty("user.dir");
@@ -235,6 +237,7 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 				writer.write("gdx");
 				writer.close();
 			}
+			
 			if (!frag.exists()) {
 				frag.getParentFile().mkdirs();
 				frag.createNewFile();
@@ -252,6 +255,7 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 				}
 				sc.close();
 			}
+			
 			StringBuilder fragText = new StringBuilder();
 			if (vert.exists()) {
 				Scanner sc = new Scanner(frag);
@@ -334,6 +338,7 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 						ignored.printStackTrace();
 					}
 				}
+				
 				try {
 					String text1 = "pos:" + this.player.pos.x + "," + this.player.pos.y + "," + this.player.pos.z + "\n";
 					text1 += "rot:" + camRotX + "," + camRotY + "," + camRotZ + "\n";
@@ -357,26 +362,18 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 				
 				try {
 					//https://www.codejava.net/java-se/file-io/how-to-compress-files-in-zip-format-in-java#:~:text=Here%20are%20the%20steps%20to,ZipEntry)%20method%20on%20the%20ZipOutputStream.
-//					AtomicInteger runningThreads = new AtomicInteger();
 					for (TerrainChunk chunk : world.terrainChunks.values()) {
-//						while (runningThreads.get() >= 10);
-//						Thread thread = new Thread(()->{
 						try {
-//								int id = runningThreads.get();
 							String pos = chunk.pos.chunkX + "," + chunk.pos.chunkY + "," + chunk.pos.chunkZ;
 							String text = Compression.deQuadruple(Compression.makeIllegible(Compression.compress(chunk.toString())));
-//								while (runningThreads.get() != id);
 							tfile.getInner().getInner().addOrReplaceFile(pos + ".data", text);
 						} catch (Throwable ignored) {
 						}
-//							runningThreads.getAndDecrement();
-//						});
-//						thread.setDaemon(false);
-//						thread.start();
 					}
 				} catch (Throwable err) {
 					Logger.logErrFull(err);
 				}
+				
 				String text = Compression.makeIllegible(Compression.deQuadruple(Compression.compress(
 						"//I guess you can tamper with this (for now)" + "\n" +
 								"seed:" + seed + "\n" +
@@ -386,7 +383,7 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 								"time:" + dayTime + "\n"
 				)));
 				tfile.addOrReplaceFile("level.properties", text);
-//				System.out.println(tfile.toString());
+				
 				try {
 					byte[] bytes = GZip.gZip(tfile.toString());
 					Files.createFile(this.worldFile, bytes);
@@ -433,6 +430,7 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 					Logger.logErrFull(err);
 				}
 			}
+			
 			world.loadAll(file.getOrCreateInnerTFile().getOrCreateInnerTFile());
 			world.loadTerrainChunks(file.getInner().getInner());
 			String level = Compression.decompress(Compression.reQuadruple(Compression.makeLegible(file.get("level.properties"))));
@@ -458,7 +456,7 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 		try {
 			this.file = new TFile();
 			file.getParentFile().mkdirs();
-			int size = 16;
+			int size = 8;
 			this.worldFile = "saves/" + file.getName();
 			seed = new Random().nextInt();
 			scaleX = new Random(seed).nextInt(16) + 16;
@@ -490,6 +488,13 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 	@Override
 	public void render() {
 		try {
+			lastGC++;
+			
+			if (lastGC >= 10000) {
+				Runtime.getRuntime().gc();
+				lastGC = 0;
+			}
+			
 			environmentSurface.remove(sunLight);
 			sunLight.setDirection(new Vector3(
 					(float) Math.cos(Math.toRadians((dayTime / 10f) % 360)) / 2f,
@@ -524,10 +529,12 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 					for (int i = 0; i < chunkPoses.length; i++) {
 						ChunkPos chunkPos = (ChunkPos) chunkPoses[i];
 						Chunk chunk = (Chunk) chunks[i];
+						
 						if (world.needsRefresh.contains(chunkPos)) {
 							chunkModels.remove(chunkPos);
 							meshDatas.remove(chunkPos);
 						}
+						
 						if (chunkModels.containsKey(chunkPos)) {
 							chunkModels.get(chunkPos).transform.setTranslation(offset);
 							batch.render(chunkModels.get(chunkPos), environmentSurface);
@@ -556,10 +563,12 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 					for (int i = 0; i < chunkPoses.length; i++) {
 						ChunkPos pos = (ChunkPos) chunkPoses[i];
 						TerrainChunk chunk = (TerrainChunk) chunks[i];
+						
 						if (!terrainChunkModels.containsKey(pos)) {
 							ModelInstance instance = chunk.bake();
 							terrainChunkModels.put(pos, instance);
 						}
+						
 						ModelInstance instance = terrainChunkModels.get(pos);
 						instance.transform.setTranslation(offset);
 						batch.render(instance, environmentSurface);
@@ -585,11 +594,14 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 	private void handlePlacement(Vector3 offset) {
 		Vector3 pos = new Vector3(player.pos.x / 2, player.pos.y / 2, player.pos.z / 2);
 		pos = pos.add(player.pos.x <= 0 ? -0.5f : 0.5f, 0.5f, player.pos.z <= 0 ? -0.5f : 0.5f);
+		
 		for (float i = 0; i < 16; i += 0.01f) {
 			pos = pos.add(camera.direction.nor().scl(0.01f));
 			BlockPos pos2 = new BlockPos(pos);
+			
 			if (world.hasChunk(pos2)) {
 				Block block = world.getBlock(pos2);
+				
 				if (block != null) {
 					if (slot < Blocks.count()) {
 						Vector3 posLoc = new Vector3(pos2.x, pos2.y, pos2.z);
@@ -606,6 +618,7 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 						boundingBox.transform.translate(offset);
 						batch.render(boundingBox, environmentSurface);
 						boundingBox.transform.scale(undoScale, undoScale, undoScale);
+						
 						if (leftDown) {
 							for (float be = 0; be <= 2; be += 0.1f) {
 								Vector3 posPlusX = new Vector3(pos.x + be, pos.y, pos.z);
@@ -615,31 +628,42 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 								Vector3 posPlusZ = new Vector3(pos.x, pos.y, pos.z + be);
 								Vector3 posMinusZ = new Vector3(pos.x, pos.y, pos.z - be);
 								Block block1 = world.getBlock(new BlockPos(posPlusX));
+								
 								if (block1 == null) {
 									world.setBlock(new BlockPos(posPlusX), place);
 									break;
 								}
+								
 								block1 = world.getBlock(new BlockPos(posMinusX));
+								
 								if (block1 == null) {
 									world.setBlock(new BlockPos(posMinusX), place);
 									break;
 								}
+								
 								block1 = world.getBlock(new BlockPos(posPlusY));
+								
 								if (block1 == null) {
 									world.setBlock(new BlockPos(posPlusY), place);
 									break;
 								}
+								
 								block1 = world.getBlock(new BlockPos(posMinusY));
+								
 								if (block1 == null) {
 									world.setBlock(new BlockPos(posMinusY), place);
 									break;
 								}
+								
 								block1 = world.getBlock(new BlockPos(posPlusZ));
+								
 								if (block1 == null) {
 									world.setBlock(new BlockPos(posPlusZ), place);
 									break;
 								}
+								
 								block1 = world.getBlock(new BlockPos(posMinusZ));
+								
 								if (block1 == null) {
 									world.setBlock(new BlockPos(posMinusZ), place);
 									break;

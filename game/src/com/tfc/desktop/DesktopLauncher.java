@@ -1,6 +1,8 @@
 package com.tfc.desktop;
 
-import com.tfc.flame.*;
+import com.tfc.flame.FlameConfig;
+import com.tfc.flame.FlameLog;
+import com.tfc.flame.FlameURLLoader;
 
 import java.io.File;
 import java.net.URL;
@@ -24,6 +26,7 @@ public class DesktopLauncher {
 			if (isDev) {
 				urls.add(new File(dir + "\\game\\build\\classes\\java\\main").toURL());
 				urls.add(new File(dir + "\\core\\build\\classes\\java\\main").toURL());
+				urls.add(new File(dir + "\\core\\assets").toURL());
 			} else {
 				urls.add(new File(dir + "\\game-1.0.jar").toURL());
 			}

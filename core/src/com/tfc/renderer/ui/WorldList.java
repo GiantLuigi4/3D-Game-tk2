@@ -58,9 +58,12 @@ public class WorldList {
 	}
 	
 	private static boolean drawWorld(File f, RenderUI event, int index, float mx, float my, int y) {
+		float num = 11.5f;
 		boolean isHovered =
-				((int) (438 - (my * 438)) <= y)
-						&& ((int) (438 - (my * 438)) >= (y - 40));
+				((1 - my) * num) <= ((y + 42) / 42f) - 0.1f &&
+						((1 - my) * num) >= ((y) / 42f) - 0.1f;
+//				((int) (num - (my * num)) <= y)
+//						&& ((int) (num - (my * num)) >= (y - 41));
 		float color = index == selection ? 1 : isHovered ? 0.75f : 0.25f;
 		event.getBatch().setColor(color, color, color, 1);
 		event.getBatch().draw(
