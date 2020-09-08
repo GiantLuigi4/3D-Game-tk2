@@ -37,11 +37,10 @@ public class BlockPos {
 		return (float) Math.sqrt(a * a + b * b + c * c);
 	}
 	
-	//Divide by 2 since entity positions are double the block pos
 	public float distance(Vector3 vec) {
-		final float a = x - (vec.x / 2);
-		final float b = y - (vec.y / 2);
-		final float c = z - (vec.z / 2);
+		final float a = x - vec.x;
+		final float b = y - vec.y;
+		final float c = z - vec.z;
 		return (float) Math.sqrt(a * a + b * b + c * c);
 	}
 }

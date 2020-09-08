@@ -266,14 +266,16 @@ public class Main {
 			loadZ = -10;
 			loadY++;
 		}
+
+//		player.pos.set(0,0,0);
 		
 		Object[] chunkPoses = getInstance().world.terrainChunks.keySet().toArray();
 		Object[] chunkPoses1 = getInstance().world.chunks.keySet().toArray();
 		for (Object o : chunkPoses) {
 			ChunkPos posCheck = (ChunkPos) o;
-			float xOff = Math.abs(posCheck.blockPos.x - player.pos.x);
-			float yOff = Math.abs(posCheck.blockPos.y - player.pos.y);
-			float zOff = Math.abs(posCheck.blockPos.z - player.pos.z);
+			float xOff = Math.abs(posCheck.blockPos.x - (player.pos.x));
+			float yOff = Math.abs(posCheck.blockPos.y - (player.pos.y));
+			float zOff = Math.abs(posCheck.blockPos.z - (player.pos.z));
 			xOff /= Chunk.size;
 			yOff /= (Chunk.size * 16);
 			zOff /= Chunk.size;
@@ -284,9 +286,9 @@ public class Main {
 		}
 		for (Object o : chunkPoses1) {
 			ChunkPos posCheck = (ChunkPos) o;
-			float xOff = Math.abs(posCheck.blockPos.x - player.pos.x);
-			float yOff = Math.abs(posCheck.blockPos.y - player.pos.y);
-			float zOff = Math.abs(posCheck.blockPos.z - player.pos.z);
+			float xOff = Math.abs(posCheck.blockPos.x - (player.pos.x));
+			float yOff = Math.abs(posCheck.blockPos.y - (player.pos.y));
+			float zOff = Math.abs(posCheck.blockPos.z - (player.pos.z));
 			xOff /= Chunk.size;
 			yOff /= (Chunk.size * 16);
 			zOff /= Chunk.size;
