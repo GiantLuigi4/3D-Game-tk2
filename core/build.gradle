@@ -3,7 +3,7 @@ apply plugin: "java"
 dependencies {
     implementation "com.github.GiantLuigi4:FlameLoader:1.1"
 
-    implementation 'com.github.GiantLuigi4:TFileManipulation:5ef598bee9'
+    implementation 'com.github.GiantLuigi4:TFileManipulation:902c2de3a0'
 
     implementation 'com.github.Vatuu:discord-rpc:1.6.2'
 }

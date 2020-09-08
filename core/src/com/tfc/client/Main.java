@@ -8,6 +8,8 @@ import com.tfc.blocks.BlockPos;
 import com.tfc.entity.Player;
 import com.tfc.utils.BiObject;
 import com.tfc.utils.discord.rich_presence.RichPresence;
+import com.tfc.world.chunks.Chunk;
+import com.tfc.world.chunks.ChunkPos;
 
 import java.util.ArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -20,6 +22,10 @@ public class Main {
 	private static boolean releasedSpaceInAir = false;
 	
 	private static int lastDRPCUpdate = 0;
+	
+	private static int loadX = -10;
+	private static int loadY = -10;
+	private static int loadZ = -10;
 	
 	public static void tick(ArrayList<Integer> keys) {
 		Player player = getInstance().player;
@@ -124,12 +130,14 @@ public class Main {
 		//Terrain collision
 		if (getInstance().world.terrainChunks != null) {
 			getInstance().world.terrainChunks.forEach((pos, chunk) -> chunk.forEach(tri -> {
-				if (tri.collides(player.pos)) {
-					float newY = Math.max(player.pos.y, tri.getCollisionPosY(player.pos));
-					if (newY > player.pos.y) {
-						player.velocity.y = Math.max(player.velocity.y, 0);
-						player.pos.y = newY;
-						player.onGround = true;
+				if (chunk.pos.blockPos.distance(player.pos) <= Chunk.size * 4) {
+					if (tri.collides(player.pos)) {
+						float newY = Math.max(player.pos.y, tri.getCollisionPosY(player.pos));
+						if (newY > player.pos.y) {
+							player.velocity.y = Math.max(player.velocity.y, 0);
+							player.pos.y = newY;
+							player.onGround = true;
+						}
 					}
 				}
 			}));
@@ -177,6 +185,114 @@ public class Main {
 			lastDRPCUpdate = 0;
 			if (RichPresence.isReady()) {
 				RichPresence.update("In world", ".demo_save");
+			}
+		}
+		
+		ChunkPos pos = new ChunkPos(
+				(int) player.pos.x / Chunk.size + loadX,
+				(int) player.pos.y / Chunk.size + loadY,
+				(int) player.pos.z / Chunk.size + loadZ
+		);
+		
+		if (!getInstance().world.terrainChunks.containsKey(pos)) {
+			getInstance().world.load(getInstance().file, pos);
+		}
+		
+		ChunkPos pos1 = new ChunkPos(
+				(int) (((int) player.pos.x / Chunk.size) - ((player.pos.x < 0) ? 1f : -0.5f)),
+				((int) player.pos.y / Chunk.size),
+				(int) (((int) player.pos.z / Chunk.size) - ((player.pos.z < 0) ? 1f : -0.5f))
+		);
+		
+		if (!getInstance().world.terrainChunks.containsKey(pos1)) {
+			getInstance().world.load(getInstance().file, pos1);
+		}
+		
+		if (!getInstance().world.terrainChunks.containsKey(pos)) {
+			boolean exists = false;
+			for (int i = -10; i <= 10; i++) {
+				ChunkPos pos2 = new ChunkPos(
+						pos1.chunkX,
+						i,
+						pos1.chunkZ
+				);
+				if (getInstance().world.terrainChunks.containsKey(pos2)) {
+					exists = true;
+				}
+				pos2 = new ChunkPos(
+						pos1.chunkX,
+						(pos2.chunkY + i),
+						pos1.chunkZ
+				);
+				if (getInstance().world.terrainChunks.containsKey(pos2)) {
+					exists = true;
+				}
+			}
+			if (!exists) {
+				getInstance().world.generate(pos1.chunkX, pos1.chunkZ, getInstance().getNoise());
+			}
+		}
+		
+		if (!getInstance().world.terrainChunks.containsKey(pos1)) {
+			boolean exists = false;
+			for (int i = -10; i <= 10; i++) {
+				ChunkPos pos2 = new ChunkPos(
+						pos.chunkX,
+						i,
+						pos.chunkZ
+				);
+				if (!getInstance().world.terrainChunks.containsKey(pos2)) {
+					getInstance().world.load(getInstance().file, pos2);
+				}
+				if (getInstance().world.terrainChunks.containsKey(pos2)) {
+					exists = true;
+				}
+			}
+			if (!exists) {
+				getInstance().world.generate(pos.chunkX, pos.chunkZ, getInstance().getNoise());
+			}
+		}
+		
+		loadX++;
+		
+		if (loadX >= 10) {
+			loadX = -10;
+			loadZ++;
+		}
+		if (loadY >= 10) {
+			loadY = -10;
+		}
+		if (loadZ >= 10) {
+			loadZ = -10;
+			loadY++;
+		}
+		
+		Object[] chunkPoses = getInstance().world.terrainChunks.keySet().toArray();
+		Object[] chunkPoses1 = getInstance().world.chunks.keySet().toArray();
+		for (Object o : chunkPoses) {
+			ChunkPos posCheck = (ChunkPos) o;
+			float xOff = Math.abs(posCheck.blockPos.x - player.pos.x);
+			float yOff = Math.abs(posCheck.blockPos.y - player.pos.y);
+			float zOff = Math.abs(posCheck.blockPos.z - player.pos.z);
+			xOff /= Chunk.size;
+			yOff /= (Chunk.size * 16);
+			zOff /= Chunk.size;
+			int off = (int) Math.max(xOff, Math.max(yOff, zOff));
+			if (off >= 11) {
+				getInstance().world.unload(getInstance().file, posCheck);
+			}
+		}
+		for (Object o : chunkPoses1) {
+			ChunkPos posCheck = (ChunkPos) o;
+			float xOff = Math.abs(posCheck.blockPos.x - player.pos.x);
+			float yOff = Math.abs(posCheck.blockPos.y - player.pos.y);
+			float zOff = Math.abs(posCheck.blockPos.z - player.pos.z);
+			xOff /= Chunk.size;
+			yOff /= (Chunk.size * 16);
+			zOff /= Chunk.size;
+			int off = (int) Math.max(xOff, Math.max(yOff, zOff));
+			if (off >= 11) {
+				getInstance().world.unload(getInstance().file, posCheck);
 			}
 		}
 		

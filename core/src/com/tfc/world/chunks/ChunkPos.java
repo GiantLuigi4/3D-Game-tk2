@@ -43,6 +43,12 @@ public class ChunkPos {
 		this.blockPos = new BlockPos(chunkX * size, chunkY * size, chunkZ * size);
 	}
 	
+	public ChunkPos offset(int x, int y, int z) {
+		return new ChunkPos(
+				this.chunkX + x, this.chunkY + y, this.chunkZ + z
+		);
+	}
+	
 	@Override
 	public boolean equals(Object obj) {
 		return this.toString().equals(obj.toString()) && obj.getClass().equals(this.getClass());

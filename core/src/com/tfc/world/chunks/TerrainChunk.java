@@ -95,6 +95,7 @@ public class TerrainChunk {
 	public ModelInstance bake() {
 		HashMap<Location, BiObject<Material, MeshBuilder>> builders = new HashMap<>();
 		for (TerrainTriangle tri : terrain) {
+			tri.createRenderable();
 			if (builders.containsKey(tri.texture)) {
 				MeshBuilder builder = builders.get(tri.texture).getObj2();
 				tri.renderable.model.meshes.forEach(builder::addMesh);

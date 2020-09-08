@@ -12,7 +12,7 @@ import com.tfc.world.World;
 import java.io.File;
 
 public class WorldList {
-	private static int selection = 0;
+	private static int selection = -2;
 	
 	public static void render(RenderUI event) {
 		File[] files = Files.get("saves").listFiles();
@@ -42,15 +42,18 @@ public class WorldList {
 		}
 		
 		File f = Files.get("saves/" + "world " + (files.length + 1) + ".gz");
-		boolean isHovered = drawWorld(f, event, index, mx, my, y);
+		boolean isHovered = drawWorld(f, event, -1, mx, my, y);
 		if (isHovered && Mouse.isPressed(0)) {
 			Mouse.release(0);
-			ThreeDeeFirstPersonGame.getInstance().world = new World();
-			
-			if (!f.exists()) ThreeDeeFirstPersonGame.getInstance().createWorld(f);
-			else ThreeDeeFirstPersonGame.getInstance().loadWorld("saves/" + f.getName());
-			
-			ThreeDeeFirstPersonGame.getInstance().ingame = true;
+			if (selection == -1) {
+				ThreeDeeFirstPersonGame.getInstance().world = new World();
+				
+				if (!f.exists()) ThreeDeeFirstPersonGame.getInstance().createWorld(f);
+				else ThreeDeeFirstPersonGame.getInstance().loadWorld("saves/" + f.getName());
+				
+				ThreeDeeFirstPersonGame.getInstance().ingame = true;
+			}
+			selection = -1;
 		}
 	}
 	

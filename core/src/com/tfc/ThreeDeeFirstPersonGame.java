@@ -158,6 +158,7 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 	private ModelInstance boundingBox = null;
 	Perlin2D noise;
 	
+	public static final Registry registryEvent = (Registry) Objects.requireNonNull(EventBase.getOrCreateInstance(Registry.class));
 	
 	public double camRotX = 0;
 	public double camRotY = 45;
@@ -213,6 +214,10 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 	
 	public final HashMap<ChunkPos, ModelInstance> terrainChunkModels = new HashMap<>();
 	
+	public Perlin2D getNoise() {
+		return noise;
+	}
+	
 	@Override
 	public void create() {
 		try {
@@ -260,10 +265,10 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 			
 			modelBuilder = new ModelBuilder();
 			
-			Registry registryEvent = (Registry) Objects.requireNonNull(EventBase.getOrCreateInstance(Registry.class));
-			
 			registryEvent.register(new Location(namespace + ":register"), this::register);
 			renderEvent.register(new Location(namespace + ":ui"), All::render);
+			
+			registryEvent.post();
 			
 			Gdx.graphics.setTitle(namespace);
 			Gdx.graphics.setVSync(true);
@@ -282,8 +287,6 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 				batch = new ModelBatch(vertText.toString(), fragText.toString());
 			}
 			
-			registryEvent.post();
-			
 			player.pos.y = 128;
 			
 			hotbar = Textures.get(new Location(namespace + ":hotbar"));
@@ -294,6 +297,7 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 			spritehotbar = new Sprite(hotbar);
 			
 			Gdx.input.setInputProcessor(this);
+			
 		} catch (Throwable err) {
 			Logger.logErrFull(err);
 		}
@@ -314,19 +318,27 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 			running.set(false);
 			
 			if (ingame) {
-				TFile tfile = new TFile();
-				tfile
-						//Players
-						.createInnerTFile()
-						//Chunks
-						.createInnerTFile()
-						//Terrain
-						.createInnerTFile();
+//				TFile tfile = new TFile();
+				if (file == null) file = new TFile();
+				TFile tfile = file;
+				for (int i = 0; i <= 10; i++) {
+					try {
+						tfile
+								//Players
+								.getOrCreateInnerTFile()
+								//Chunks
+								.getOrCreateInnerTFile()
+								//Terrain
+								.getOrCreateInnerTFile();
+					} catch (Throwable ignored) {
+						ignored.printStackTrace();
+					}
+				}
 				try {
 					String text1 = "pos:" + this.player.pos.x + "," + this.player.pos.y + "," + this.player.pos.z + "\n";
 					text1 += "rot:" + camRotX + "," + camRotY + "," + camRotZ + "\n";
 					String text = Compression.makeIllegible(Compression.compress(text1));
-					tfile.addFile("player1.data", text);
+					tfile.addOrReplaceFile("player1.data", text);
 				} catch (Throwable err) {
 					Logger.logErrFull(err);
 				}
@@ -337,7 +349,7 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 						String pos = chunk.pos.chunkX + "," + chunk.pos.chunkY + "," + chunk.pos.chunkZ;
 						String text = Compression.deQuadruple(Compression.makeIllegible(Compression.compress(chunk.toString())));
 						//add the file to the inner file of the tfile, inner files are an optimization method, and it's not bad optimization
-						tfile.getInner().getInner().addFile(pos + ".data", text);
+						tfile.getInner().addOrReplaceFile(pos + ".data", text);
 					}
 				} catch (Throwable err) {
 					Logger.logErrFull(err);
@@ -345,10 +357,22 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 				
 				try {
 					//https://www.codejava.net/java-se/file-io/how-to-compress-files-in-zip-format-in-java#:~:text=Here%20are%20the%20steps%20to,ZipEntry)%20method%20on%20the%20ZipOutputStream.
+//					AtomicInteger runningThreads = new AtomicInteger();
 					for (TerrainChunk chunk : world.terrainChunks.values()) {
-						String pos = chunk.pos.chunkX + "," + chunk.pos.chunkY + "," + chunk.pos.chunkZ;
-						String text = Compression.deQuadruple(Compression.makeIllegible(Compression.compress(chunk.toString())));
-						tfile.getInner().getInner().getInner().addFile(pos + ".data", text);
+//						while (runningThreads.get() >= 10);
+//						Thread thread = new Thread(()->{
+						try {
+//								int id = runningThreads.get();
+							String pos = chunk.pos.chunkX + "," + chunk.pos.chunkY + "," + chunk.pos.chunkZ;
+							String text = Compression.deQuadruple(Compression.makeIllegible(Compression.compress(chunk.toString())));
+//								while (runningThreads.get() != id);
+							tfile.getInner().getInner().addOrReplaceFile(pos + ".data", text);
+						} catch (Throwable ignored) {
+						}
+//							runningThreads.getAndDecrement();
+//						});
+//						thread.setDaemon(false);
+//						thread.start();
 					}
 				} catch (Throwable err) {
 					Logger.logErrFull(err);
@@ -361,8 +385,8 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 								"createNoise\n" +
 								"time:" + dayTime + "\n"
 				)));
-				tfile.addFile("level.properties", text);
-				System.out.println(tfile.toString());
+				tfile.addOrReplaceFile("level.properties", text);
+//				System.out.println(tfile.toString());
 				try {
 					byte[] bytes = GZip.gZip(tfile.toString());
 					Files.createFile(this.worldFile, bytes);
@@ -392,8 +416,6 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 			String tfile = GZip.readString(new GZIPInputStream(stream));
 			this.worldFile = worldFile;
 			file = new TFile(tfile);
-			world.loadAll(file.getInner());
-			world.loadTerrainChunks(file.getInner().getInner());
 			String playerData = Compression.decompress(Compression.makeLegible(file.get("player1.data")));
 			for (String s : playerData.split("\n")) {
 				String[] strings = s.split(",");
@@ -411,6 +433,8 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 					Logger.logErrFull(err);
 				}
 			}
+			world.loadAll(file.getOrCreateInnerTFile().getOrCreateInnerTFile());
+			world.loadTerrainChunks(file.getInner().getInner());
 			String level = Compression.decompress(Compression.reQuadruple(Compression.makeLegible(file.get("level.properties"))));
 			for (String line : level.split("\n")) {
 				if (line.startsWith("seed:")) {
@@ -432,6 +456,7 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 	
 	public void createWorld(File file) {
 		try {
+			this.file = new TFile();
 			file.getParentFile().mkdirs();
 			int size = 16;
 			this.worldFile = "saves/" + file.getName();
@@ -491,39 +516,57 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 			
 			batch.begin(camera);
 			if (ingame) {
-				AtomicInteger bakedInFrame = new AtomicInteger(0);
-				world.chunks.forEach((chunkPos, chunk) -> {
-					if (world.needsRefresh.contains(chunkPos)) {
-						chunkModels.remove(chunkPos);
-						meshDatas.remove(chunkPos);
-					}
-					if (chunkModels.containsKey(chunkPos)) {
-						chunkModels.get(chunkPos).transform.setTranslation(offset);
-						batch.render(chunkModels.get(chunkPos), environmentSurface);
-					} else {
-						if (meshDatas.containsKey(chunkPos)) {
-							chunkModels.put(chunkPos, new ModelInstance(chunk.bake(meshDatas.get(chunkPos))));
-						} else if (bakedInFrame.get() < 16) {
-							ModelInstance instance = new ModelInstance(chunk.bake(chunk.createMesh()));
-							batch.render(instance);
-							chunkModels.put(chunkPos, instance);
+				try {
+					AtomicInteger bakedInFrame = new AtomicInteger(0);
+					Object[] chunkPoses = world.chunks.keySet().toArray();
+					Object[] chunks = world.chunks.values().toArray();
+//					world.chunks.forEach((chunkPos, chunk) -> {
+					for (int i = 0; i < chunkPoses.length; i++) {
+						ChunkPos chunkPos = (ChunkPos) chunkPoses[i];
+						Chunk chunk = (Chunk) chunks[i];
+						if (world.needsRefresh.contains(chunkPos)) {
+							chunkModels.remove(chunkPos);
+							meshDatas.remove(chunkPos);
+						}
+						if (chunkModels.containsKey(chunkPos)) {
 							chunkModels.get(chunkPos).transform.setTranslation(offset);
 							batch.render(chunkModels.get(chunkPos), environmentSurface);
-							bakedInFrame.getAndAdd(1);
+						} else {
+							if (meshDatas.containsKey(chunkPos)) {
+								chunkModels.put(chunkPos, new ModelInstance(chunk.bake(meshDatas.get(chunkPos))));
+							} else if (bakedInFrame.get() < 16) {
+								ModelInstance instance = new ModelInstance(chunk.bake(chunk.createMesh()));
+								batch.render(instance);
+								chunkModels.put(chunkPos, instance);
+								chunkModels.get(chunkPos).transform.setTranslation(offset);
+								batch.render(chunkModels.get(chunkPos), environmentSurface);
+								bakedInFrame.getAndAdd(1);
+							}
 						}
 					}
-				});
-				world.needsRefresh.clear();
+//					});
+					world.needsRefresh.clear();
+				} catch (Throwable ignored) {
+				}
 				
-				world.terrainChunks.forEach((pos, chunk) -> {
-					if (!terrainChunkModels.containsKey(pos)) {
-						ModelInstance instance = chunk.bake();
-						terrainChunkModels.put(pos, instance);
+				try {
+					Object[] chunkPoses = world.terrainChunks.keySet().toArray();
+					Object[] chunks = world.terrainChunks.values().toArray();
+//					world.terrainChunks.forEach((pos, chunk) -> {
+					for (int i = 0; i < chunkPoses.length; i++) {
+						ChunkPos pos = (ChunkPos) chunkPoses[i];
+						TerrainChunk chunk = (TerrainChunk) chunks[i];
+						if (!terrainChunkModels.containsKey(pos)) {
+							ModelInstance instance = chunk.bake();
+							terrainChunkModels.put(pos, instance);
+						}
+						ModelInstance instance = terrainChunkModels.get(pos);
+						instance.transform.setTranslation(offset);
+						batch.render(instance, environmentSurface);
 					}
-					ModelInstance instance = terrainChunkModels.get(pos);
-					instance.transform.setTranslation(offset);
-					batch.render(instance, environmentSurface);
-				});
+//					});
+				} catch (Throwable ignored) {
+				}
 				
 				handlePlacement(offset);
 			}

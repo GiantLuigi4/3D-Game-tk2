@@ -12,7 +12,7 @@ import java.util.ArrayList;
 
 public class TerrainTriangle {
 	final Vector3 v1, v2, v3;
-	public final ModelInstance renderable;
+	public ModelInstance renderable = null;
 	public final Location texture;
 	public final Vector3 min;
 	
@@ -25,12 +25,15 @@ public class TerrainTriangle {
 				Math.min(v1.y, Math.min(v2.y, v3.y)),
 				Math.min(v1.z, Math.min(v2.z, v3.z))
 		);
-		this.renderable = Triangle.createTriangle(
-				new Vector3(v1).sub(0, 3, 0),
-				new Vector3(v2).sub(0, 3, 0),
-				new Vector3(v3).sub(0, 3, 0),
-				(texture)
-		);
+		try {
+			this.renderable = Triangle.createTriangle(
+					new Vector3(v1).sub(0, 3, 0),
+					new Vector3(v2).sub(0, 3, 0),
+					new Vector3(v3).sub(0, 3, 0),
+					(texture)
+			);
+		} catch (Throwable ignored) {
+		}
 		this.texture = texture;
 	}
 	
@@ -76,6 +79,17 @@ public class TerrainTriangle {
 		return (v1 + ":" + v2 + ":" + v3 + ":" + texture.toString()).replace("(", "").replace(")", "");
 	}
 	
+	public void createRenderable() {
+		if (this.renderable == null) {
+			this.renderable = Triangle.createTriangle(
+					new Vector3(v1).sub(0, 3, 0),
+					new Vector3(v2).sub(0, 3, 0),
+					new Vector3(v3).sub(0, 3, 0),
+					(texture)
+			);
+		}
+	}
+	
 	public void draw(ModelBatch batch, Environment environment, Vector3 offset) {
 		renderable.transform.setTranslation(offset);
 		renderable.transform.translate(min);
@@ -83,6 +97,9 @@ public class TerrainTriangle {
 	}
 	
 	public boolean collides(Vector3 pos) {
+		if (pos.dst(min) >= 20) {
+			return false;
+		}
 		return new BoundingBox(new Vector3(
 				Math.min(v1.x, Math.min(v2.x, v3.x)),
 				Math.min(v1.y, Math.min(v2.y, v3.y)) - 1,

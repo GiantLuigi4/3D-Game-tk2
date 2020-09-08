@@ -39,20 +39,35 @@ public class World {
 	
 	public Chunk getChunk(BlockPos pos) {
 		ChunkPos pos1 = new ChunkPos(pos);
-		if (!chunks.containsKey(pos1)) {
+		if (!chunks.containsKey(pos1))
 			chunks.put(pos1, new Chunk(this, pos1));
-//			System.out.println("missing chunk at pos:"+pos1);
-		}
 		return chunks.get(pos1);
+	}
+	
+	public Chunk getChunk(ChunkPos pos, boolean create) {
+		if (!chunks.containsKey(pos))
+			if (create)
+				chunks.put(pos, new Chunk(this, pos));
+			else return null;
+		return chunks.get(pos);
+	}
+	
+	public TerrainChunk getTerrainChunk(ChunkPos pos, boolean create) {
+		if (!terrainChunks.containsKey(pos))
+			if (create)
+				terrainChunks.put(pos, new TerrainChunk(pos));
+			else return null;
+		return terrainChunks.get(pos);
 	}
 	
 	public void setBlock(BlockPos pos, Block block) {
 		Block bk = getChunk(pos).getBlock(pos);
-//		if (bk!=null) bk.onRemove(this);
+		if (bk != null) bk.onRemove(pos, this);
 		if (!needsRefresh.contains(getChunk(pos).pos))
 			needsRefresh.add(getChunk(pos).pos);
 		getChunk(pos).setBlock(pos, block);
-//		block.onPlace(this);
+		if (block != null)
+			block.onPlace(pos, this);
 	}
 	
 	public void loadTerrainChunks(File file) {
@@ -75,17 +90,56 @@ public class World {
 	}
 	
 	public void loadTerrainChunks(TFile file) {
-		file.listAllNames().forEach(name -> {
-			String pos = name.replace(".data", "");
-			String[] nums = pos.split(",");
-			ChunkPos pos1 = new ChunkPos(
-					Integer.parseInt(nums[0]),
-					Integer.parseInt(nums[1]),
-					Integer.parseInt(nums[2])
-			);
-			TerrainChunk chunk = TerrainChunk.read(file.getAsStream(name), pos1);
-			this.terrainChunks.put(pos1, chunk);
-		});
+//		ChunkPos pos = new ChunkPos(
+//				new BlockPos(
+//						(int)ThreeDeeFirstPersonGame.getInstance().player.pos.x,
+//						(int)ThreeDeeFirstPersonGame.getInstance().player.pos.y,
+//						(int)ThreeDeeFirstPersonGame.getInstance().player.pos.z
+//				)
+//		);
+//		try {
+//			TerrainChunk.read(file.getAsStream(
+//					pos.chunkX+","+pos.chunkY+","+pos.chunkZ+".data"
+//			), pos);
+//		} catch (Throwable ignored) {
+//		}
+		ChunkPos pos1 = new ChunkPos(
+				new BlockPos(
+						(int) ThreeDeeFirstPersonGame.getInstance().player.pos.x,
+						(int) ThreeDeeFirstPersonGame.getInstance().player.pos.y,
+						(int) ThreeDeeFirstPersonGame.getInstance().player.pos.z
+				)
+		);
+		for (int x = -5; x <= 5; x++) {
+			for (int y = -5; y <= 5; y++) {
+				for (int z = -5; z <= 5; z++) {
+					try {
+						ChunkPos pos = pos1.offset(x, y, z);
+						String name = pos.chunkX + "," + pos.chunkY + "," + pos.chunkZ + ".data";
+						String text = file.getOrDefault(
+								name,
+								"null"
+						);
+						if (!text.equals("null")) {
+							TerrainChunk chunk = TerrainChunk.read(file.getAsStream(name), pos);
+							this.terrainChunks.put(pos, chunk);
+						}
+					} catch (Throwable ignored) {
+					}
+				}
+			}
+		}
+//		file.listAllNames().forEach(name -> {
+//			String pos = name.replace(".data", "");
+//			String[] nums = pos.split(",");
+//			ChunkPos pos1 = new ChunkPos(
+//					Integer.parseInt(nums[0]),
+//					Integer.parseInt(nums[1]),
+//					Integer.parseInt(nums[2])
+//			);
+//			TerrainChunk chunk = TerrainChunk.read(file.getAsStream(name), pos1);
+//			this.terrainChunks.put(pos1, chunk);
+//		});
 	}
 	
 	public void loadAll(File file) {
@@ -114,13 +168,36 @@ public class World {
 	}
 	
 	public void loadAll(@NotNull TFile file) {
-		file.listAllNames().forEach((name) -> {
-			try {
-				loadChunkFromStream(file.getAsStream(name));
-			} catch (Throwable err) {
-				Logger.logErrFull(err);
+		ChunkPos pos1 = new ChunkPos(
+				new BlockPos(
+						(int) ThreeDeeFirstPersonGame.getInstance().player.pos.x,
+						(int) ThreeDeeFirstPersonGame.getInstance().player.pos.y,
+						(int) ThreeDeeFirstPersonGame.getInstance().player.pos.z
+				)
+		);
+		for (int x = -5; x <= 5; x++) {
+			for (int y = -5; y <= 5; y++) {
+				for (int z = -5; z <= 5; z++) {
+					try {
+						ChunkPos pos = pos1.offset(x, y, z);
+						String name = pos.chunkX + "," + pos.chunkY + "," + pos.chunkZ + ".data";
+						String text = file.getOrDefault(
+								name,
+								"null"
+						);
+						if (!text.equals("null")) loadChunkFromStream(file.getAsStream(name));
+					} catch (Throwable ignored) {
+					}
+				}
 			}
-		});
+		}
+//		file.listAllNames().forEach((name) -> {
+//			try {
+////				loadChunkFromStream(file.getAsStream(name));
+//			} catch (Throwable err) {
+//				Logger.logErrFull(err);
+//			}
+//		});
 	}
 	
 	private void loadChunkFromStream(@NotNull InputStream input) throws IOException {
@@ -169,6 +246,46 @@ public class World {
 		}
 	}
 	
+	public void unload(TFile file, ChunkPos pos1) {
+		Chunk chunk = this.getChunk(pos1, false);
+		if (chunk != null) {
+			String pos = chunk.pos.chunkX + "," + chunk.pos.chunkY + "," + chunk.pos.chunkZ;
+			String text = Compression.deQuadruple(Compression.makeIllegible(Compression.compress(chunk.toString())));
+			//add the file to the inner file of the tfile, inner files are an optimization method, and it's not bad optimization
+			file.getOrCreateInnerTFile().addOrReplaceFile(pos + ".data", text);
+			this.chunks.remove(pos1);
+		}
+		TerrainChunk terrainChunk = getTerrainChunk(pos1, false);
+		if (terrainChunk != null) {
+			String pos = terrainChunk.pos.chunkX + "," + terrainChunk.pos.chunkY + "," + terrainChunk.pos.chunkZ;
+			String text = Compression.deQuadruple(Compression.makeIllegible(Compression.compress(terrainChunk.toString())));
+			file.getOrCreateInnerTFile().getOrCreateInnerTFile().addOrReplaceFile(pos + ".data", text);
+			this.terrainChunks.remove(pos1);
+		}
+	}
+	
+	public void load(TFile file, ChunkPos pos) {
+		try {
+			String name = pos.chunkX + "," + pos.chunkY + "," + pos.chunkZ + ".data";
+			String text = file.getOrCreateInnerTFile().getOrDefault(
+					name,
+					"null"
+			);
+			String text1 = file.getInner().getOrCreateInnerTFile().getOrDefault(
+					name,
+					"null"
+			);
+			if (!this.chunks.containsKey(pos))
+				if (!text.equals("null"))
+					loadChunkFromStream(file.getInner().getAsStream(name));
+			if (!this.terrainChunks.containsKey(pos))
+				if (!text1.equals("null"))
+					this.terrainChunks.put(pos, TerrainChunk.read(file.getInner().getInner().getAsStream(name), pos));
+		} catch (Throwable ignored) {
+//			ignored.printStackTrace();
+		}
+	}
+	
 	public void loadChunk(@NotNull File file, String posLoad) {
 		if (file.getName().endsWith(".zip")) {
 			try {
@@ -196,7 +313,7 @@ public class World {
 	
 	public void removeBlock(BlockPos pos) {
 		Block bk = getChunk(pos).getBlock(pos);
-//		if (bk!=null) bk.onRemove(this);
+		if (bk != null) bk.onRemove(pos, this);
 		if (!needsRefresh.contains(getChunk(pos).pos))
 			needsRefresh.add(getChunk(pos).pos);
 		getChunk(pos).setBlock(pos, null);

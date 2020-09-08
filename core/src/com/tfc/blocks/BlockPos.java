@@ -29,4 +29,19 @@ public class BlockPos {
 	public BlockPos offset(int x, int y, int z) {
 		return new BlockPos(this.x + x, this.y + y, this.z + z);
 	}
+	
+	public float distance(BlockPos other) {
+		final float a = x - other.x;
+		final float b = y - other.y;
+		final float c = z - other.z;
+		return (float) Math.sqrt(a * a + b * b + c * c);
+	}
+	
+	//Divide by 2 since entity positions are double the block pos
+	public float distance(Vector3 vec) {
+		final float a = x - (vec.x / 2);
+		final float b = y - (vec.y / 2);
+		final float c = z - (vec.z / 2);
+		return (float) Math.sqrt(a * a + b * b + c * c);
+	}
 }

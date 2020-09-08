@@ -25,10 +25,10 @@ public class Mouse {
 	public static void release(int button) {
 		switch (button) {
 			case 0:
-				ThreeDeeFirstPersonGame.getInstance().setRightDown(false);
+				ThreeDeeFirstPersonGame.getInstance().setLeftDown(false);
 				return;
 			case 2:
-				ThreeDeeFirstPersonGame.getInstance().setLeftDown(false);
+				ThreeDeeFirstPersonGame.getInstance().setRightDown(false);
 				return;
 			default:
 				break;
