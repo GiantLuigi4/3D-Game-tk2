@@ -28,6 +28,7 @@ import com.tfc.events.registry.Registry;
 import com.tfc.events.render.RenderUI;
 import com.tfc.files.tfile.TFile;
 import com.tfc.flame.FlameConfig;
+import com.tfc.inputs.Mouse;
 import com.tfc.model.Cube;
 import com.tfc.model.Triangle;
 import com.tfc.registry.Blocks;
@@ -42,6 +43,7 @@ import com.tfc.utils.files.Compression;
 import com.tfc.utils.files.Files;
 import com.tfc.utils.files.GZip;
 import com.tfc.utils.rendering.Font;
+import com.tfc.world.TerrainTriangle;
 import com.tfc.world.World;
 import com.tfc.world.chunks.Chunk;
 import com.tfc.world.chunks.ChunkPos;
@@ -56,6 +58,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.zip.GZIPInputStream;
 
 public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements InputProcessor {
@@ -485,6 +488,29 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 		}
 	}
 	
+	private static boolean testAndRender(TerrainTriangle triangle, Vector3 finalPos, BlockPos pos2, ModelBatch batch, ModelInstance boundingBox, Environment environmentSurface, Vector3 offset) {
+		if (triangle.collides(finalPos)) {
+//			ModelInstance instance = triangle.renderable.copy();
+//			instance.transform.setTranslation(offset.cpy().add(0,12,0));
+			TerrainTriangle render = new TerrainTriangle(triangle.v1, triangle.v2, triangle.v3, new Location(namespace + ":bounding_box"));
+			TerrainTriangle render1 = new TerrainTriangle(triangle.v3, triangle.v1, triangle.v2, new Location(namespace + ":bounding_box"));
+			render.renderable.materials.get(0).set(new BlendingAttribute(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA));
+			render1.renderable.materials.get(0).set(new BlendingAttribute(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA));
+			render.draw(batch, environmentSurface, offset.cpy().add(0, 0.0001f, 0));
+			render1.draw(batch, environmentSurface, offset.cpy().add(0, 0.0001f, 0));
+//			batch.render(render.renderable, environmentSurface);
+//			boundingBox.transform.setTranslation(
+//					triangle.min.x,
+//					triangle.min.y,
+//					triangle.min.z
+//			);
+//			boundingBox.transform.translate(offset);
+//			batch.render(boundingBox, environmentSurface);
+			return true;
+		}
+		return false;
+	}
+	
 	@Override
 	public void render() {
 		try {
@@ -577,7 +603,29 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 				} catch (Throwable ignored) {
 				}
 				
-				handlePlacement(offset);
+				BlockPos pos1 = handlePlacementTerrain(offset);
+				BlockPos pos2 = handlePlacement(offset);
+				try {
+					Block place = Blocks.getByID(slot);
+					if (pos1 != null && pos2 == null) {
+						Mouse.release(0);
+						world.setBlock(pos1, place);
+					} else if (pos1 == null && pos2 != null) {
+						Mouse.release(0);
+						world.setBlock(pos2, place);
+					} else {
+						if (pos1 != null && pos2 != null) {
+							if (pos1.distance(player.pos) < pos2.distance(player.pos)) {
+								Mouse.release(0);
+								world.setBlock(pos1, place);
+							} else {
+								Mouse.release(0);
+								world.setBlock(pos2, place);
+							}
+						}
+					}
+				} catch (Throwable ignored) {
+				}
 			}
 			batch.end();
 			
@@ -591,7 +639,7 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 		}
 	}
 	
-	private void handlePlacement(Vector3 offset) {
+	private BlockPos handlePlacement(Vector3 offset) {
 		Vector3 pos = new Vector3(player.pos.x / 2, player.pos.y / 2, player.pos.z / 2);
 		pos = pos.add(player.pos.x <= 0 ? -0.5f : 0.5f, 0.5f, player.pos.z <= 0 ? -0.5f : 0.5f);
 		
@@ -606,7 +654,7 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 					if (slot < Blocks.count()) {
 						Vector3 posLoc = new Vector3(pos2.x, pos2.y, pos2.z);
 						pos = posLoc.add(pos.sub(posLoc)).sub(camera.direction.nor());
-						Block place = Blocks.getByID(slot);
+//						Block place = Blocks.getByID(slot);
 						float scale = 1;
 						float undoScale = 1 / scale;
 						boundingBox.transform.scale(scale, scale, scale);
@@ -630,43 +678,49 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 								Block block1 = world.getBlock(new BlockPos(posPlusX));
 								
 								if (block1 == null) {
-									world.setBlock(new BlockPos(posPlusX), place);
-									break;
+//									world.setBlock(new BlockPos(posPlusX), place);
+//									break;
+									return new BlockPos(posPlusX);
 								}
 								
 								block1 = world.getBlock(new BlockPos(posMinusX));
 								
 								if (block1 == null) {
-									world.setBlock(new BlockPos(posMinusX), place);
-									break;
+//									world.setBlock(new BlockPos(posMinusX), place);
+//									break;
+									return new BlockPos(posMinusX);
 								}
 								
 								block1 = world.getBlock(new BlockPos(posPlusY));
 								
 								if (block1 == null) {
-									world.setBlock(new BlockPos(posPlusY), place);
-									break;
+//									world.setBlock(new BlockPos(posPlusY), place);
+//									break;
+									return new BlockPos(posPlusY);
 								}
 								
 								block1 = world.getBlock(new BlockPos(posMinusY));
 								
 								if (block1 == null) {
-									world.setBlock(new BlockPos(posMinusY), place);
-									break;
+//									world.setBlock(new BlockPos(posMinusY), place);
+//									break;
+									return new BlockPos(posMinusY);
 								}
 								
 								block1 = world.getBlock(new BlockPos(posPlusZ));
 								
 								if (block1 == null) {
-									world.setBlock(new BlockPos(posPlusZ), place);
-									break;
+//									world.setBlock(new BlockPos(posPlusZ), place);
+//									break;
+									return new BlockPos(posPlusZ);
 								}
 								
 								block1 = world.getBlock(new BlockPos(posMinusZ));
 								
 								if (block1 == null) {
-									world.setBlock(new BlockPos(posMinusZ), place);
-									break;
+//									world.setBlock(new BlockPos(posMinusZ), place);
+//									break;
+									return new BlockPos(posMinusZ);
 								}
 							}
 							pos = pos.sub(camera.direction.nor());
@@ -690,6 +744,64 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 				}
 			}
 		}
+		return null;
+	}
+	
+	private BlockPos handlePlacementTerrain(Vector3 offset) {
+		Vector3 pos = new Vector3(player.pos.x, player.pos.y, player.pos.z);
+		pos = pos.add(
+				0.5f,
+				3.5f,
+				0.5f
+		);
+		pos = pos.add(
+				player.pos.x <= 0 ? 0.5f : -0.5f,
+				player.pos.y <= 0 ? 0.5f : -0.5f,
+				player.pos.z <= 0 ? 0.5f : -0.5f
+		);
+		
+		AtomicBoolean atomicBoolean = new AtomicBoolean(false);
+		pos = pos.add(camera.direction.nor().scl(4.01f));
+		for (float i = 0; i < 16; i += 0.01f) {
+			if (!atomicBoolean.get()) {
+				pos = pos.add(camera.direction.nor().scl(0.01f));
+				BlockPos pos2 = new BlockPos(pos);
+				ChunkPos pos3 = new ChunkPos(pos2);
+				
+				TerrainChunk chunk = world.getTerrainChunk(pos3, false);
+				
+				if (chunk != null) {
+					Vector3 finalPos = pos;
+					AtomicReference<ModelBatch> batchAtomicReference = new AtomicReference<>(batch);
+					
+					try {
+						chunk.forEach(triangle -> {
+							try {
+								if (!atomicBoolean.get()) {
+									atomicBoolean.set(testAndRender(triangle, finalPos, pos2, batchAtomicReference.get(), boundingBox, environmentSurface, offset));
+								}
+							} catch (Throwable ignored) {
+							}
+						});
+					} catch (Throwable ignored) {
+					}
+					
+					if (atomicBoolean.get()) {
+						pos = pos.add(camera.direction.nor().scl(1.5f));
+						BlockPos pos1 = new BlockPos(
+								(int) pos.x / 2,
+								(int) (pos.y - 2) / 2,
+								(int) pos.z / 2
+						);
+						if (leftDown) {
+//							world.setBlock(pos1, Blocks.get(new Location(namespace + ":stone")));
+							return pos1;
+						}
+					}
+				}
+			}
+		}
+		return null;
 	}
 	
 	@Override

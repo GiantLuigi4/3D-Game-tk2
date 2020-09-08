@@ -11,7 +11,7 @@ import com.tfc.utils.Location;
 import java.util.ArrayList;
 
 public class TerrainTriangle {
-	final Vector3 v1, v2, v3;
+	public final Vector3 v1, v2, v3;
 	public ModelInstance renderable = null;
 	public final Location texture;
 	public final Vector3 min;
@@ -38,41 +38,45 @@ public class TerrainTriangle {
 	}
 	
 	public static TerrainTriangle fromString(String string) {
-		String text = string;
-		String num1 = text.substring(0, text.indexOf(","));
-		text = text.substring(text.indexOf(",") + 1);
-		String num2 = text.substring(0, text.indexOf(","));
-		text = text.substring(text.indexOf(",") + 1);
-		String num3 = text.substring(0, text.indexOf(":"));
-		text = text.substring(text.indexOf(":") + 1);
-		Vector3 v1 = new Vector3(
-				Float.parseFloat(num1.replace(",", "")),
-				Float.parseFloat(num2.replace(",", "")),
-				Float.parseFloat(num3.replace(":", ""))
-		);
-		num1 = text.substring(0, text.indexOf(","));
-		text = text.substring(text.indexOf(",") + 1);
-		num2 = text.substring(0, text.indexOf(","));
-		text = text.substring(text.indexOf(",") + 1);
-		num3 = text.substring(0, text.indexOf(":"));
-		text = text.substring(text.indexOf(":") + 1);
-		Vector3 v2 = new Vector3(
-				Float.parseFloat(num1.replace(",", "")),
-				Float.parseFloat(num2.replace(",", "")),
-				Float.parseFloat(num3.replace(":", ""))
-		);
-		num1 = text.substring(0, text.indexOf(","));
-		text = text.substring(text.indexOf(",") + 1);
-		num2 = text.substring(0, text.indexOf(","));
-		text = text.substring(text.indexOf(",") + 1);
-		num3 = text.substring(0, text.indexOf(":"));
-		text = text.substring(text.indexOf(":") + 1);
-		Vector3 v3 = new Vector3(
-				Float.parseFloat(num1.replace(",", "")),
-				Float.parseFloat(num2.replace(",", "")),
-				Float.parseFloat(num3.replace(",", ""))
-		);
-		return new TerrainTriangle(v1, v2, v3, new Location(text));
+		try {
+			String text = string;
+			String num1 = text.substring(0, text.indexOf(","));
+			text = text.substring(text.indexOf(",") + 1);
+			String num2 = text.substring(0, text.indexOf(","));
+			text = text.substring(text.indexOf(",") + 1);
+			String num3 = text.substring(0, text.indexOf(":"));
+			text = text.substring(text.indexOf(":") + 1);
+			Vector3 v1 = new Vector3(
+					Float.parseFloat(num1.replace(",", "")),
+					Float.parseFloat(num2.replace(",", "")),
+					Float.parseFloat(num3.replace(":", ""))
+			);
+			num1 = text.substring(0, text.indexOf(","));
+			text = text.substring(text.indexOf(",") + 1);
+			num2 = text.substring(0, text.indexOf(","));
+			text = text.substring(text.indexOf(",") + 1);
+			num3 = text.substring(0, text.indexOf(":"));
+			text = text.substring(text.indexOf(":") + 1);
+			Vector3 v2 = new Vector3(
+					Float.parseFloat(num1.replace(",", "")),
+					Float.parseFloat(num2.replace(",", "")),
+					Float.parseFloat(num3.replace(":", ""))
+			);
+			num1 = text.substring(0, text.indexOf(","));
+			text = text.substring(text.indexOf(",") + 1);
+			num2 = text.substring(0, text.indexOf(","));
+			text = text.substring(text.indexOf(",") + 1);
+			num3 = text.substring(0, text.indexOf(":"));
+			text = text.substring(text.indexOf(":") + 1);
+			Vector3 v3 = new Vector3(
+					Float.parseFloat(num1.replace(",", "")),
+					Float.parseFloat(num2.replace(",", "")),
+					Float.parseFloat(num3.replace(",", ""))
+			);
+			return new TerrainTriangle(v1, v2, v3, new Location(text));
+		} catch (Throwable ignored) {
+			return null;
+		}
 	}
 	
 	public String toString() {
@@ -92,7 +96,7 @@ public class TerrainTriangle {
 	
 	public void draw(ModelBatch batch, Environment environment, Vector3 offset) {
 		renderable.transform.setTranslation(offset);
-		renderable.transform.translate(min);
+//		renderable.transform.translate(min);
 		batch.render(renderable, environment);
 	}
 	

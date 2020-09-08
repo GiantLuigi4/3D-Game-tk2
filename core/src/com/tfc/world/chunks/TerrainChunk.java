@@ -7,7 +7,6 @@ import com.badlogic.gdx.graphics.g3d.ModelInstance;
 import com.badlogic.gdx.graphics.g3d.utils.MeshBuilder;
 import com.badlogic.gdx.graphics.g3d.utils.ModelBuilder;
 import com.tfc.ThreeDeeFirstPersonGame;
-import com.tfc.files.compression.Numbers;
 import com.tfc.model.Cube;
 import com.tfc.utils.BiObject;
 import com.tfc.utils.Location;
@@ -89,7 +88,7 @@ public class TerrainChunk {
 			chars[i] = (char) bytes[i];
 		}
 		stream.close();
-		return loadChunkFromString(Numbers.decompress(Compression.decompress(new String(bytes)), true, true), pos);
+		return loadChunkFromString(Compression.reQuadruple(Compression.decompress(new String(bytes))), pos);
 	}
 	
 	public ModelInstance bake() {
@@ -123,7 +122,10 @@ public class TerrainChunk {
 		TerrainChunk terrain = new TerrainChunk(pos);
 		for (String s : terrainData.split("\n")) {
 			try {
-				terrain.add(TerrainTriangle.fromString(s));
+				TerrainTriangle triangle = TerrainTriangle.fromString(s);
+				if (triangle != null) {
+					terrain.add(triangle);
+				}
 			} catch (Throwable err) {
 				Logger.logErrFull(err);
 			}
@@ -132,7 +134,7 @@ public class TerrainChunk {
 	}
 	
 	public void forEach(Consumer<TerrainTriangle> triangleConsumer) {
-		if (terrain != null) terrain.forEach(triangleConsumer);
+		terrain.forEach(triangleConsumer);
 	}
 	
 	public String toString() {
