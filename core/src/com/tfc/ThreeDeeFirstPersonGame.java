@@ -337,8 +337,8 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 								.getOrCreateInnerTFile()
 								//Terrain
 								.getOrCreateInnerTFile();
-					} catch (Throwable ignored) {
-						ignored.printStackTrace();
+					} catch (Throwable err) {
+						err.printStackTrace();
 					}
 				}
 				
@@ -370,7 +370,8 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 							String pos = chunk.pos.chunkX + "," + chunk.pos.chunkY + "," + chunk.pos.chunkZ;
 							String text = Compression.deQuadruple(Compression.makeIllegible(Compression.compress(chunk.toString())));
 							tfile.getInner().getInner().addOrReplaceFile(pos + ".data", text);
-						} catch (Throwable ignored) {
+						} catch (Throwable err) {
+							Logger.logErrFull(err);
 						}
 					}
 				} catch (Throwable err) {
@@ -545,7 +546,12 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 			Gdx.gl.glClearColor(0, 1f, 1f, 1);
 			Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT | GL20.GL_DEPTH_BUFFER_BIT);
 			
-			batch.begin(camera);
+			try {
+				batch.begin(camera);
+			} catch (Throwable err) {
+				batch.end();
+				batch.begin(camera);
+			}
 			if (ingame) {
 				try {
 					AtomicInteger bakedInFrame = new AtomicInteger(0);
@@ -579,7 +585,8 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 					}
 //					});
 					world.needsRefresh.clear();
-				} catch (Throwable ignored) {
+				} catch (Throwable err) {
+					Logger.logErrFull(err);
 				}
 				
 				try {
@@ -589,18 +596,54 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 					for (int i = 0; i < chunkPoses.length; i++) {
 						ChunkPos pos = (ChunkPos) chunkPoses[i];
 						TerrainChunk chunk = (TerrainChunk) chunks[i];
-						
-						if (!terrainChunkModels.containsKey(pos)) {
-							ModelInstance instance = chunk.bake();
-							terrainChunkModels.put(pos, instance);
+						if (new Random().nextInt(32) == 16) {
+							terrainChunkModels.remove(pos);
 						}
-						
-						ModelInstance instance = terrainChunkModels.get(pos);
-						instance.transform.setTranslation(offset);
-						batch.render(instance, environmentSurface);
+						try {
+							if (!terrainChunkModels.containsKey(pos)) {
+								ModelInstance instance = chunk.bake();
+								terrainChunkModels.put(pos, instance);
+							}
+							
+							ModelInstance instance = terrainChunkModels.get(pos);
+							instance.transform.setTranslation(offset);
+							batch.render(instance, environmentSurface);
+						} catch (Throwable err) {
+							if (terrainChunkModels.containsKey(pos)) {
+								terrainChunkModels.remove(pos);
+							}
+						}
 					}
 //					});
-				} catch (Throwable ignored) {
+				} catch (Throwable err) {
+					try {
+						Object[] chunkPoses = world.terrainChunks.keySet().toArray();
+						Object[] chunks = world.terrainChunks.values().toArray();
+//					world.terrainChunks.forEach((pos, chunk) -> {
+						for (int i = 0; i < chunkPoses.length; i++) {
+							ChunkPos pos = (ChunkPos) chunkPoses[i];
+							TerrainChunk chunk = (TerrainChunk) chunks[i];
+							if (new Random().nextInt(32) == 16) {
+								terrainChunkModels.remove(pos);
+							}
+							try {
+								if (!terrainChunkModels.containsKey(pos)) {
+									ModelInstance instance = chunk.bake();
+									terrainChunkModels.put(pos, instance);
+								}
+								
+								ModelInstance instance = terrainChunkModels.get(pos);
+								instance.transform.setTranslation(offset);
+								batch.render(instance, environmentSurface);
+							} catch (Throwable err1) {
+								if (terrainChunkModels.containsKey(pos)) {
+									terrainChunkModels.remove(pos);
+								}
+							}
+						}
+					} catch (Throwable err2) {
+						Logger.logErrFull(err);
+					}
 				}
 				
 				BlockPos pos1 = handlePlacementTerrain(offset);
@@ -609,33 +652,43 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 					Block place = Blocks.getByID(slot);
 					if (pos1 != null && pos2 == null) {
 						Mouse.release(0);
+						Mouse.release(2);
 						world.setBlock(pos1, place);
 					} else if (pos1 == null && pos2 != null) {
 						Mouse.release(0);
+						Mouse.release(2);
 						world.setBlock(pos2, place);
 					} else {
 						if (pos1 != null && pos2 != null) {
-							if (pos1.distance(player.pos) < pos2.distance(player.pos)) {
+							if (pos2.distance(player.pos) > pos1.distance(player.pos)) {
 								Mouse.release(0);
+								Mouse.release(2);
 								world.setBlock(pos1, place);
 							} else {
 								Mouse.release(0);
+								Mouse.release(2);
 								world.setBlock(pos2, place);
 							}
 						}
 					}
-				} catch (Throwable ignored) {
+				} catch (Throwable err) {
+					Logger.logErrFull(err);
 				}
 			}
 			batch.end();
 			
-			batch2d.begin();
+			try {
+				batch2d.begin();
+			} catch (Throwable err) {
+				batch2d.end();
+				batch2d.begin();
+			}
 			renderEvent.post(batch2d);
 			batch2d.end();
 		} catch (Throwable err) {
 			Logger.logErrFull(err);
-			dispose();
-			Runtime.getRuntime().exit(-1);
+//			dispose();
+//			Runtime.getRuntime().exit(-1);
 		}
 	}
 	
@@ -780,20 +833,57 @@ public class ThreeDeeFirstPersonGame extends ApplicationAdapter implements Input
 								if (!atomicBoolean.get()) {
 									atomicBoolean.set(testAndRender(triangle, finalPos, pos2, batchAtomicReference.get(), boundingBox, environmentSurface, offset));
 								}
-							} catch (Throwable ignored) {
+							} catch (Throwable err) {
+								Logger.logErrFull(err);
 							}
 						});
-					} catch (Throwable ignored) {
+					} catch (Throwable err) {
+						Logger.logErrFull(err);
 					}
 					
 					if (atomicBoolean.get()) {
 						pos = pos.add(camera.direction.nor().scl(1.5f));
 						BlockPos pos1 = new BlockPos(
-								(int) pos.x / 2,
-								(int) (pos.y - 2) / 2,
-								(int) pos.z / 2
+								(int) pos.x,
+								(int) pos.y,
+								(int) pos.z
 						);
-						if (leftDown) {
+						if (rightDown) {
+//							world.setBlock(pos1, null);
+							final BlockPos finalPos1 = pos1;
+							final int breakSize = 8;
+							Mouse.release(2);
+							world.terrainChunks.forEach((cp, tc) -> {
+								if (cp.blockPos.distance(player.pos) < 1280) {
+									tc.forEach((tri) -> {
+										Vector3 avg = tri.min.cpy();
+										avg.set(avg.x, finalPos1.y, avg.z);
+										if (finalPos1.distance(avg) < breakSize + 8) {
+											tc.queueRemove(tri);
+											float y1 = breakSize - Math.min(finalPos1.distance(tri.v1), breakSize);
+											float y2 = breakSize - Math.min(finalPos1.distance(tri.v2), breakSize);
+											float y3 = breakSize - Math.min(finalPos1.distance(tri.v3), breakSize);
+											tc.queueAdd(
+													new TerrainTriangle(
+															new Vector3(tri.v1.x, tri.v1.y - y1, tri.v1.z),
+															new Vector3(tri.v2.x, tri.v2.y - y2, tri.v2.z),
+															new Vector3(tri.v3.x, tri.v3.y - y3, tri.v3.z),
+															tri.texture
+													)
+											);
+										}
+									});
+									tc.update();
+									terrainChunkModels.remove(cp);
+								}
+							});
+//							return pos1;
+						} else if (leftDown) {
+							pos1 = new BlockPos(
+									(int) pos.x / 2,
+									(int) (pos.y - 2) / 2,
+									(int) pos.z / 2
+							);
 //							world.setBlock(pos1, Blocks.get(new Location(namespace + ":stone")));
 							return pos1;
 						}

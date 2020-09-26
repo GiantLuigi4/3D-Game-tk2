@@ -124,7 +124,8 @@ public class World {
 							TerrainChunk chunk = TerrainChunk.read(file.getAsStream(name), pos);
 							this.terrainChunks.put(pos, chunk);
 						}
-					} catch (Throwable ignored) {
+					} catch (Throwable err) {
+						Logger.logErrFull(err);
 					}
 				}
 			}
@@ -186,7 +187,8 @@ public class World {
 								"null"
 						);
 						if (!text.equals("null")) loadChunkFromStream(file.getAsStream(name));
-					} catch (Throwable ignored) {
+					} catch (Throwable err) {
+						Logger.logErrFull(err);
 					}
 				}
 			}
@@ -224,6 +226,7 @@ public class World {
 						Integer.parseInt(strings[3].replace(",", ""))
 				);
 				this.setBlock(pos, block);
+			} catch (ArrayIndexOutOfBoundsException ignored) {
 			} catch (Throwable err) {
 				Logger.logErrFull(err);
 			}
@@ -281,8 +284,8 @@ public class World {
 			if (!this.terrainChunks.containsKey(pos))
 				if (!text1.equals("null"))
 					this.terrainChunks.put(pos, TerrainChunk.read(file.getInner().getInner().getAsStream(name), pos));
-		} catch (Throwable ignored) {
-//			ignored.printStackTrace();
+		} catch (Throwable err) {
+			Logger.logErrFull(err);
 		}
 	}
 	

@@ -19,6 +19,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.ConcurrentModificationException;
 import java.util.HashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
@@ -28,6 +29,8 @@ import java.util.zip.ZipFile;
 public class TerrainChunk {
 	public final ChunkPos pos;
 	private final ArrayList<TerrainTriangle> terrain = new ArrayList<>();
+	private final ArrayList<TerrainTriangle> queuedTrisRemove = new ArrayList<>();
+	private final ArrayList<TerrainTriangle> queuedTrisAdd = new ArrayList<>();
 	
 	public TerrainChunk(ChunkPos pos) {
 		this.pos = pos;
@@ -95,19 +98,36 @@ public class TerrainChunk {
 		HashMap<Location, BiObject<Material, MeshBuilder>> builders = new HashMap<>();
 		for (TerrainTriangle tri : terrain) {
 			tri.createRenderable();
-			if (builders.containsKey(tri.texture)) {
-				MeshBuilder builder = builders.get(tri.texture).getObj2();
-				tri.renderable.model.meshes.forEach(builder::addMesh);
-			} else {
-				builders.put(tri.texture, new BiObject<>(tri.renderable.model.materials.get(0), new MeshBuilder()));
-				MeshBuilder builder = builders.get(tri.texture).getObj2();
-				builder.begin(Cube.defaultAttribs);
-				tri.renderable.model.meshes.forEach(builder::addMesh);
+			try {
+				if (tri.texture != null) {
+					if (builders.containsKey(tri.texture)) {
+						MeshBuilder builder = builders.get(tri.texture).getObj2();
+						if (builder != null)
+							if (tri.renderable != null)
+								if (tri.renderable.model != null)
+									if (tri.renderable.model.meshes != null)
+										tri.renderable.model.meshes.forEach(builder::addMesh);
+					} else {
+						builders.put(tri.texture, new BiObject<>(tri.renderable.model.materials.get(0), new MeshBuilder()));
+						MeshBuilder builder = builders.get(tri.texture).getObj2();
+						builder.begin(Cube.defaultAttribs);
+						tri.renderable.model.meshes.forEach(builder::addMesh);
+					}
+				}
+			} catch (ConcurrentModificationException err) {
+				throw new RuntimeException(err);
+			} catch (Throwable err) {
+				throw new RuntimeException(err);
 			}
 		}
-		ModelInstance instance = null;
+		ModelInstance instance;
 		ModelBuilder modelBuilder = ThreeDeeFirstPersonGame.getInstance().modelBuilder;
-		modelBuilder.begin();
+		try {
+			modelBuilder.begin();
+		} catch (Throwable err) {
+			modelBuilder.end();
+			modelBuilder.begin();
+		}
 		AtomicInteger integer = new AtomicInteger(0);
 		builders.values().forEach(builder -> {
 			Mesh mesh = builder.getObj2().end();
@@ -135,6 +155,35 @@ public class TerrainChunk {
 	
 	public void forEach(Consumer<TerrainTriangle> triangleConsumer) {
 		terrain.forEach(triangleConsumer);
+	}
+	
+	public void queueRemove(TerrainTriangle tri) {
+		queuedTrisRemove.add(tri);
+	}
+	
+	public void queueAdd(TerrainTriangle tri) {
+		queuedTrisAdd.add(tri);
+	}
+	
+	public void update() {
+		queuedTrisRemove.forEach(tri -> {
+			AtomicInteger index = new AtomicInteger(0);
+			try {
+				terrain.forEach(tri2 -> {
+					try {
+						if (tri.equals(tri2)) {
+							terrain.remove(index.get());
+						}
+					} catch (Throwable ignored) {
+					}
+					index.getAndIncrement();
+				});
+			} catch (Throwable ignored) {
+			}
+		});
+		terrain.addAll(queuedTrisAdd);
+		queuedTrisRemove.clear();
+		queuedTrisAdd.clear();
 	}
 	
 	public String toString() {

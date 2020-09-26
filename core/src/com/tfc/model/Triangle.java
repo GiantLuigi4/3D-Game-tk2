@@ -4,12 +4,10 @@ import com.badlogic.gdx.graphics.*;
 import com.badlogic.gdx.graphics.g3d.Material;
 import com.badlogic.gdx.graphics.g3d.Model;
 import com.badlogic.gdx.graphics.g3d.ModelInstance;
-import com.badlogic.gdx.graphics.g3d.attributes.TextureAttribute;
 import com.badlogic.gdx.graphics.g3d.utils.MeshPartBuilder;
 import com.badlogic.gdx.graphics.g3d.utils.MeshPartBuilder.VertexInfo;
 import com.badlogic.gdx.graphics.g3d.utils.ModelBuilder;
 import com.badlogic.gdx.math.Vector3;
-import com.tfc.ThreeDeeFirstPersonGame;
 import com.tfc.utils.Location;
 import com.tfc.utils.MaterialMap;
 
@@ -30,7 +28,8 @@ public class Triangle {
 	
 	public static ModelInstance createTriangle(Vector3 vert1, Vector3 vert2, Vector3 vert3, Location texture) {
 		Material mat = MaterialMap.getOrCreate(texture);
-		ModelBuilder builder = ThreeDeeFirstPersonGame.getInstance().modelBuilder;
+		ModelBuilder builder = new ModelBuilder();
+//		ModelBuilder builder = ThreeDeeFirstPersonGame.getInstance().modelBuilder;
 		builder.begin();
 		MeshPartBuilder builder1 = builder.part("tri", GL20.GL_TRIANGLES, Cube.defaultAttribs, mat);
 		builder1.setColor(Color.RED);

@@ -7,8 +7,10 @@ import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.math.collision.BoundingBox;
 import com.tfc.model.Triangle;
 import com.tfc.utils.Location;
+import com.tfc.utils.Logger;
 
 import java.util.ArrayList;
+import java.util.Objects;
 
 public class TerrainTriangle {
 	public final Vector3 v1, v2, v3;
@@ -32,7 +34,8 @@ public class TerrainTriangle {
 					new Vector3(v3).sub(0, 3, 0),
 					(texture)
 			);
-		} catch (Throwable ignored) {
+		} catch (Throwable err) {
+//			Logger.logErrFull(err);
 		}
 		this.texture = texture;
 	}
@@ -74,7 +77,8 @@ public class TerrainTriangle {
 					Float.parseFloat(num3.replace(",", ""))
 			);
 			return new TerrainTriangle(v1, v2, v3, new Location(text));
-		} catch (Throwable ignored) {
+		} catch (Throwable err) {
+			Logger.logErrFull(err);
 			return null;
 		}
 	}
@@ -84,13 +88,16 @@ public class TerrainTriangle {
 	}
 	
 	public void createRenderable() {
-		if (this.renderable == null) {
-			this.renderable = Triangle.createTriangle(
-					new Vector3(v1).sub(0, 3, 0),
-					new Vector3(v2).sub(0, 3, 0),
-					new Vector3(v3).sub(0, 3, 0),
-					(texture)
-			);
+		try {
+			if (this.renderable == null) {
+				this.renderable = Triangle.createTriangle(
+						new Vector3(v1).sub(0, 3, 0),
+						new Vector3(v2).sub(0, 3, 0),
+						new Vector3(v3).sub(0, 3, 0),
+						(texture)
+				);
+			}
+		} catch (Throwable ignored) {
 		}
 	}
 	
@@ -180,5 +187,42 @@ public class TerrainTriangle {
 			this.y = y;
 			this.z = z;
 		}
+	}
+	
+	@Override
+	public boolean equals(Object o) {
+		if (this == o) return true;
+		if (o == null || getClass() != o.getClass()) return false;
+		TerrainTriangle triangle = (TerrainTriangle) o;
+		if (this.hashCode() == o.hashCode()) return true;
+		return
+				((
+						v1.x == triangle.v1.x &&
+								v1.y == triangle.v1.y &&
+								v1.z == triangle.v1.z
+				) &&
+						(
+								v2.x == triangle.v2.x &&
+										v2.y == triangle.v2.y &&
+										v2.z == triangle.v2.z
+						) &&
+						(
+								v3.x == triangle.v3.x &&
+										v3.y == triangle.v3.y &&
+										v3.z == triangle.v3.z
+						)) || (
+						Objects.equals(v1, triangle.v1) &&
+								Objects.equals(v2, triangle.v2) &&
+								Objects.equals(v3, triangle.v3)
+				);
+	}
+	
+	@Override
+	public int hashCode() {
+		return Objects.hash(
+				v1.x, v1.y, v1.z,
+				v2.x, v2.y, v2.z,
+				v3.x, v3.y, v3.z
+		);
 	}
 }
